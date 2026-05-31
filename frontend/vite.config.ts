@@ -5,13 +5,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/auth": "http://127.0.0.1:8001",
-      "/ingredients": "http://127.0.0.1:8001",
-      "/recipes": "http://127.0.0.1:8001",
-      "/recommendations": "http://127.0.0.1:8001",
-      "/admin": "http://127.0.0.1:8001",
-      "/users": "http://127.0.0.1:8001",
-      "/uploads": "http://127.0.0.1:8001"
+      "/auth": "http://127.0.0.1:8000",
+      "/ingredients": "http://127.0.0.1:8000",
+      "/recipes": "http://127.0.0.1:8000",
+      "/recommendations": "http://127.0.0.1:8000",
+      "/admin": "http://127.0.0.1:8000",
+      "/users": "http://127.0.0.1:8000",
+      "/uploads": "http://127.0.0.1:8000"
     }
   }
 });
