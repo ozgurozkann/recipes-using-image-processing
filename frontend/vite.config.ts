@@ -10,7 +10,8 @@ export default defineConfig({
       "/recipes": "http://127.0.0.1:8000",
       "/recommendations": "http://127.0.0.1:8000",
       "/admin": "http://127.0.0.1:8000",
-      "/users": "http://127.0.0.1:8000"
+      "/users": "http://127.0.0.1:8000",
+      "/uploads": "http://127.0.0.1:8000"
     }
   }
 });
