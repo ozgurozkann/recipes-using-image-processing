@@ -1,0 +1,45 @@
+[
+  {
+    "id": "r1",
+    "name": "Domatesli Soğanlı Omlet",
+    "ingredients": ["yumurta", "domates", "soğan", "tuz", "karabiber", "zeytinyağı"],
+    "instructions": [
+      "Soğanı küçük doğrayıp zeytinyağında yumuşatın.",
+      "Domatesi ekleyip 2-3 dakika pişirin.",
+      "Yumurtaları çırpıp tavaya dökün, baharatlayın.",
+      "Kısık ateşte pişirip servis edin."
+    ]
+  },
+  {
+    "id": "r2",
+    "name": "Patates Kavurması",
+    "ingredients": ["patates", "soğan", "tuz", "pul biber", "zeytinyağı"],
+    "instructions": [
+      "Patatesleri küp doğrayın.",
+      "Yağı ısıtıp patatesleri kızartır gibi çevirerek pişirin.",
+      "Soğanı ekleyip birlikte kavurun, baharatlayın.",
+      "Sıcak servis edin."
+    ]
+  },
+  {
+    "id": "r3",
+    "name": "Havuçlu Yoğurt Mezesi",
+    "ingredients": ["havuç", "yoğurt", "sarımsak", "tuz", "zeytinyağı"],
+    "instructions": [
+      "Havuçları rendeleyip zeytinyağında 4-5 dakika soteleyin.",
+      "Soğuyunca yoğurt, sarımsak ve tuz ile karıştırın.",
+      "Üzerine az zeytinyağı gezdirip servis edin."
+    ]
+  },
+  {
+    "id": "r4",
+    "name": "Soğanlı Domates Sos",
+    "ingredients": ["domates", "soğan", "tuz", "kekik", "zeytinyağı"],
+    "instructions": [
+      "Soğanı zeytinyağında kavurun.",
+      "Rendelenmiş domatesi ekleyip 10-12 dakika pişirin.",
+      "Tuz ve kekiği ekleyip sos olarak kullanın."
+    ]
+  }
+]
+

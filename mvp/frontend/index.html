@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recipes MVP</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; max-width: 980px; }
+      h1 { margin: 0 0 8px; }
+      .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+      .card { border: 1px solid rgba(127,127,127,0.4); border-radius: 10px; padding: 14px; min-width: 280px; flex: 1; }
+      label { display: block; font-size: 12px; opacity: 0.85; margin-top: 10px; }
+      input, button, select, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(127,127,127,0.45); background: transparent; }
+      button { cursor: pointer; }
+      .muted { opacity: 0.75; font-size: 12px; }
+      .pill { display: inline-block; padding: 2px 8px; border: 1px solid rgba(127,127,127,0.5); border-radius: 999px; margin: 2px; font-size: 12px; }
+      .recipes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+    </style>
+  </head>
+  <body>
+    <h1>Recipes MVP</h1>
+    <div class="muted">Giriş/Kayıt → Malzeme seçimi → Tarif önerisi/liste → Favori → Dummy görüntü işleme</div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="card">
+        <h3>Giriş / Kayıt</h3>
+        <label>E-posta</label>
+        <input id="email" placeholder="test@example.com" />
+        <label>Şifre</label>
+        <input id="password" type="password" placeholder="••••" />
+        <div class="row" style="margin-top:10px">
+          <button id="btnRegister">Kayıt ol</button>
+          <button id="btnLogin">Giriş yap</button>
+        </div>
+        <div class="muted" style="margin-top:10px">Token: <code id="tokenView">-</code></div>
+      </div>
+
+      <div class="card">
+        <h3>Dummy Görüntü İşleme</h3>
+        <input id="imgFile" type="file" accept="image/*" />
+        <button id="btnProcess" style="margin-top:10px">Görüntüyü işle</button>
+        <pre id="imgOut" class="muted" style="margin-top:10px"></pre>
+      </div>
+
+      <div class="card">
+        <h3>Malzeme Seç</h3>
+        <div id="ingList" class="muted">Yükleniyor…</div>
+        <button id="btnSuggest" style="margin-top:10px">Tarif öner</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="card" style="flex:2">
+        <h3>Tarifler</h3>
+        <div class="muted">Öneriler ve liste</div>
+        <div id="recipes" class="recipes" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <h3>Favoriler</h3>
+        <button id="btnFavs">Favorileri getir</button>
+        <div id="favs" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const api = (path) => path;
+      const tokenKey = "mvp_token";
+
+      function getToken() { return localStorage.getItem(tokenKey) || ""; }
+      function setToken(t) { localStorage.setItem(tokenKey, t); $("tokenView").textContent = t ? (t.slice(0, 18) + "…") : "-"; }
+
+      async function http(method, path, body, isForm) {
+        const headers = {};
+        const token = getToken();
+        if (token) headers["Authorization"] = "Bearer " + token;
+        if (body && !isForm) headers["Content-Type"] = "application/json";
+        const res = await fetch(api(path), { method, headers, body: body ? (isForm ? body : JSON.stringify(body)) : undefined });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+        if (!res.ok) throw new Error((data && (data.detail || data.error)) || ("HTTP " + res.status));
+        return data;
+      }
+
+      async function loadIngredients() {
+        const data = await http("GET", "/ingredients");
+        const wrap = document.createElement("div");
+        data.items.forEach((ing) => {
+          const id = "ing_" + ing;
+          const label = document.createElement("label");
+          label.style.display = "flex";
+          label.style.gap = "8px";
+          label.style.alignItems = "center";
+          label.style.marginTop = "6px";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.id = id;
+          cb.value = ing;
+          cb.style.width = "auto";
+          label.appendChild(cb);
+          const span = document.createElement("span");
+          span.textContent = ing;
+          label.appendChild(span);
+          wrap.appendChild(label);
+        });
+        $("ingList").innerHTML = "";
+        $("ingList").appendChild(wrap);
+      }
+
+      function selectedIngredients() {
+        return Array.from($("ingList").querySelectorAll("input[type=checkbox]:checked")).map((x) => x.value);
+      }
+
+      function recipeCard(r) {
+        const div = document.createElement("div");
+        div.className = "card";
+        const h = document.createElement("div");
+        h.innerHTML = "<strong>" + r.name + "</strong>";
+        div.appendChild(h);
+        const ings = document.createElement("div");
+        r.ingredients.forEach((x) => {
+          const p = document.createElement("span");
+          p.className = "pill";
+          p.textContent = x;
+          ings.appendChild(p);
+        });
+        div.appendChild(ings);
+        const btn = document.createElement("button");
+        btn.textContent = "Favorile / Kaldır";
+        btn.style.marginTop = "10px";
+        btn.onclick = async () => {
+          try {
+            const out = await http("POST", "/favorites/" + r.id);
+            btn.textContent = out.favorite ? "Favori eklendi" : "Favori kaldırıldı";
+            setTimeout(() => (btn.textContent = "Favorile / Kaldır"), 900);
+          } catch (e) { alert(e.message); }
+        };
+        div.appendChild(btn);
+        const pre = document.createElement("pre");
+        pre.className = "muted";
+        pre.textContent = r.instructions.join("\n");
+        pre.style.marginTop = "10px";
+        div.appendChild(pre);
+        return div;
+      }
+
+      async function renderRecipes(items) {
+        const el = $("recipes");
+        el.innerHTML = "";
+        items.forEach((r) => el.appendChild(recipeCard(r)));
+      }
+
+      $("btnRegister").onclick = async () => {
+        try {
+          const data = await http("POST", "/auth/register", { email: $("email").value, password: $("password").value });
+          setToken(data.token);
+          alert("Kayıt tamam.");
+        } catch (e) { alert(e.message); }
+      };
+      $("btnLogin").onclick = async () => {
+        try {
+          const data = await http("POST", "/auth/login", { email: $("email").value, password: $("password").value });
+          setToken(data.token);
+          alert("Giriş başarılı.");
+        } catch (e) { alert(e.message); }
+      };
+
+      $("btnSuggest").onclick = async () => {
+        try {
+          const data = await http("POST", "/recipes/suggest", { ingredients: selectedIngredients() });
+          await renderRecipes(data.items || []);
+        } catch (e) { alert(e.message); }
+      };
+
+      $("btnFavs").onclick = async () => {
+        try {
+          const data = await http("GET", "/favorites");
+          const wrap = document.createElement("div");
+          (data.items || []).forEach((r) => {
+            const d = document.createElement("div");
+            d.style.marginBottom = "10px";
+            d.innerHTML = "<div><strong>" + r.name + "</strong></div><div class='muted'>" + r.ingredients.join(", ") + "</div>";
+            wrap.appendChild(d);
+          });
+          $("favs").innerHTML = "";
+          $("favs").appendChild(wrap);
+        } catch (e) { alert(e.message); }
+      };
+
+      $("btnProcess").onclick = async () => {
+        const f = $("imgFile").files[0];
+        if (!f) return alert("Bir dosya seçin.");
+        const fd = new FormData();
+        fd.append("file", f);
+        try {
+          const data = await http("POST", "/image/process", fd, true);
+          $("imgOut").textContent = JSON.stringify(data, null, 2);
+          // Detected ingredients'ları otomatik işaretle
+          const set = new Set((data.detected_ingredients || []).map((x) => ("" + x).toLowerCase()));
+          $("ingList").querySelectorAll("input[type=checkbox]").forEach((cb) => {
+            cb.checked = set.has(cb.value.toLowerCase());
+          });
+        } catch (e) { alert(e.message); }
+      };
+
+      (async function init() {
+        setToken(getToken());
+        await loadIngredients();
+        const all = await http("GET", "/recipes");
+        await renderRecipes(all.items || []);
+      })();
+    </script>
+  </body>
+</html>
+
