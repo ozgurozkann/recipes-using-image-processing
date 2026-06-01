@@ -42,10 +42,10 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      api<{ items: unknown[] }>("GET", "/recipes"),
+      api<{ total: number }>("GET", "/recipes?limit=1"),
       api<{ items: unknown[] }>("GET", "/ingredients"),
     ])
-      .then(([r, i]) => setStats({ recipes: r.items.length, ingredients: i.items.length }))
+      .then(([r, i]) => setStats({ recipes: r.total, ingredients: i.items.length }))
       .catch(() => {});
   }, []);
 

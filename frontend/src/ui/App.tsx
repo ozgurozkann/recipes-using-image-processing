@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getToken, logout } from "./authStore";
 import RequireAuth from "./components/RequireAuth";
@@ -16,6 +17,14 @@ import PopularRecipesPage from "./pages/PopularRecipesPage";
 import AddRecipePage from "./pages/AddRecipePage";
 import AdminPage from "./pages/AdminPage";
 
+function getInitialTheme(): "dark" | "light" {
+  try {
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {}
+  return "dark";
+}
+
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
   const isActive = pathname === to || (to !== "/" && pathname.startsWith(to));
@@ -28,33 +37,41 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 
 export default function App() {
   const token = getToken();
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("theme", theme); } catch {}
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }
+
   return (
     <>
       <div className="container">
         <header className="topbar">
           <div className="nav">
             <Link to="/" className="brand" style={{ textDecoration: "none" }}>
-              <span className="brand-dot" />
+              <div className="brand-icon">🍽</div>
               Recipes
             </Link>
             <NavLink to="/recipes">Tarifler</NavLink>
             <NavLink to="/recipes/popular">Popüler</NavLink>
             <NavLink to="/recommend/manual">Manuel</NavLink>
             <NavLink to="/recommend/image">Fotoğraf</NavLink>
-            {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
+            {token && <NavLink to="/recipes/add">+ Ekle</NavLink>}
             {token && <NavLink to="/admin">Admin</NavLink>}
           </div>
-          <div className="nav">
+
+          <div className="nav" style={{ gap: 4 }}>
             {token ? (
               <>
                 <NavLink to="/favorites">♡ Favoriler</NavLink>
                 <NavLink to="/saved">⬇ Kaydettiklerim</NavLink>
                 <NavLink to="/profile">Profil</NavLink>
-                <button
-                  className="btn btn-sm danger"
-                  onClick={logout}
-                  style={{ marginLeft: 4 }}
-                >
+                <button className="btn btn-sm danger" onClick={logout} style={{ marginLeft: 2 }}>
                   Çıkış
                 </button>
               </>
@@ -66,6 +83,14 @@ export default function App() {
                 </Link>
               </>
             )}
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
+              style={{ marginLeft: 4 }}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
           </div>
         </header>
 

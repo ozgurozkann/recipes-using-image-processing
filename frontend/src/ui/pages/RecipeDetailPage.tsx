@@ -22,10 +22,51 @@ type Recipe = {
 };
 
 const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
-const DIFFICULTY_COLOR: Record<string, string> = { easy: "var(--ok)", medium: "var(--warning)", hard: "var(--danger)" };
 
-function randomEmoji(id: number): string {
-  return ["🍜", "🍲", "🥘", "🫕", "🥗", "🍳", "🥙", "🍱"][id % 8];
+function splitSteps(text: string): string[] {
+  if (!text?.trim()) return [];
+
+  // Önce satır sonlarına göre böl
+  const byLine = text.split(/\n+/).map((s) => s.trim()).filter((s) => s.length > 4);
+  if (byLine.length > 1) return byLine;
+
+  // Tek satırsa cümlelere böl: ". " + büyük harf veya rakam veya Türkçe büyük
+  const steps = text
+    .split(/\.(?:\s+)(?=[A-ZÇĞİÖŞÜA-Z0-9])/u)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 6)
+    .map((s) => (s.endsWith(".") || s.endsWith("!") ? s : s + "."));
+
+  return steps.length > 1 ? steps : [text.trim()];
+}
+
+
+const FOOD_PHOTOS = [
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1484723091739-30f299680de?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1473093226795-af9932fe5856?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1527515637347-bd4c1b3b1c7d?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1432139509613-5c4255815697?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1551024709-8f23befc548f?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?w=1200&h=500&fit=crop",
+  "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=1200&h=500&fit=crop",
+];
+
+function getPhotoUrl(id: number, image_url?: string): string {
+  if (image_url) return image_url;
+  return FOOD_PHOTOS[id % FOOD_PHOTOS.length];
 }
 
 export default function RecipeDetailPage() {
@@ -78,7 +119,7 @@ export default function RecipeDetailPage() {
   );
   if (!item) return null;
 
-  const steps = item.instructions.split("\n").filter(Boolean);
+  const steps = splitSteps(item.instructions);
 
   return (
     <div style={{ animation: "fadeUp 0.4s ease both" }}>
@@ -92,18 +133,29 @@ export default function RecipeDetailPage() {
       {/* Hero */}
       <div className="card" style={{ marginTop: 16, padding: 0, overflow: "hidden" }}>
         {/* Image */}
-        <div style={{
-          height: 240, background: "linear-gradient(135deg, var(--primary-subtle) 0%, var(--ok-subtle) 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center", position: "relative"
-        }}>
-          {item.image_url ? (
-            <img src={item.image_url} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <span style={{ fontSize: 80, animation: "heroFloat 5s ease-in-out infinite" }}>{randomEmoji(item.id)}</span>
-          )}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,11,19,0.8) 0%, transparent 60%)" }} />
-          <div style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}>
-            <h1 style={{ fontSize: "clamp(22px,4vw,32px)", fontWeight: 900, margin: 0, letterSpacing: "-0.5px" }}>{item.title}</h1>
+        <div style={{ height: 300, position: "relative", overflow: "hidden", background: "#111" }}>
+          <img
+            src={getPhotoUrl(item.id, item.image_url)}
+            alt={item.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onError={(e) => { e.currentTarget.style.opacity = "0"; }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)" }} />
+          <div style={{ position: "absolute", bottom: 24, left: 28, right: 28 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              {item.difficulty && (
+                <span className={`photo-badge photo-badge-${item.difficulty}`}>
+                  {DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
+                </span>
+              )}
+              {item.cooking_time > 0 && (
+                <span className="photo-badge photo-badge-white">⏱ {item.cooking_time} dk</span>
+              )}
+              {item.serving_count > 0 && (
+                <span className="photo-badge photo-badge-white">👥 {item.serving_count} kişi</span>
+              )}
+            </div>
+            <h1 style={{ fontSize: "clamp(22px,4vw,34px)", fontWeight: 900, margin: 0, letterSpacing: "-0.5px", color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{item.title}</h1>
           </div>
         </div>
 
@@ -115,11 +167,6 @@ export default function RecipeDetailPage() {
 
           {/* Stats row */}
           <div className="kpi-row">
-            {item.cooking_time > 0 && <div className="kpi">⏱ {item.cooking_time} dk</div>}
-            {item.serving_count > 0 && <div className="kpi">👥 {item.serving_count} kişi</div>}
-            <div className="kpi" style={{ color: DIFFICULTY_COLOR[item.difficulty] }}>
-              {DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
-            </div>
             <div className="kpi">♡ {item.favorite_count} favori</div>
             <div className="kpi">⬇ {item.save_count} kayıt</div>
           </div>
