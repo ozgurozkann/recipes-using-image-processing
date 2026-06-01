@@ -16,6 +16,15 @@ class RecipeIngredientIn(BaseModel):
     unit: str = "adet"
 
 
+class RecipeIngredientOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    ingredient_id: int
+    name: str
+    quantity: float
+    unit: str
+
+
 class RecipeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -32,6 +41,7 @@ class RecipeOut(BaseModel):
     is_approved: bool
     favorite_count: int
     save_count: int
+    ingredients: list[RecipeIngredientOut] = []
 
 
 class RecipeCreateIn(BaseModel):

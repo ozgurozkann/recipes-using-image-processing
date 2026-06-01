@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import FavoriteRecipe, Recipe, RecipeIngredient, SavedRecipe, User
-from ..schemas.recipes import RecipeCreateIn, RecipeOut, RecipeUpdateIn
+from ..models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, SavedRecipe, User
+from ..schemas.recipes import RecipeCreateIn, RecipeIngredientOut, RecipeOut, RecipeUpdateIn
 
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -31,13 +31,30 @@ def _recipe_out(r: Recipe) -> RecipeOut:
     )
 
 
-@router.get("", response_model=dict[str, list[RecipeOut]])
-def list_recipes(db: Session = Depends(get_db), approved_only: bool = True) -> dict[str, list[RecipeOut]]:
+@router.get("", response_model=dict)
+def list_recipes(
+    db: Session = Depends(get_db),
+    approved_only: bool = True,
+    skip: int = 0,
+    limit: int = 12,
+    q: str = "",
+    difficulty: str = "",
+) -> dict:
+    from sqlalchemy import func
     stmt = select(Recipe)
     if approved_only:
         stmt = stmt.where(Recipe.is_approved == True)  # noqa: E712
-    items = db.execute(stmt.order_by(desc(Recipe.created_at))).scalars().all()
-    return {"items": [_recipe_out(r) for r in items]}
+    if q:
+        stmt = stmt.where(Recipe.title.ilike(f"%{q}%"))
+    if difficulty:
+        stmt = stmt.where(Recipe.difficulty == difficulty)
+    total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
+    items = db.execute(stmt.order_by(desc(Recipe.created_at)).offset(skip).limit(limit)).scalars().all()
+    return {
+        "items": [_recipe_out(r) for r in items],
+        "total": total,
+        "has_more": skip + limit < total,
+    }
 
 
 @router.get("/popular", response_model=dict[str, list[RecipeOut]])
@@ -56,7 +73,22 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)) -> RecipeOut:
     r = db.get(Recipe, recipe_id)
     if not r or not r.is_approved:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    return _recipe_out(r)
+    rows = db.execute(
+        select(RecipeIngredient, Ingredient)
+        .join(Ingredient, RecipeIngredient.ingredient_id == Ingredient.id)
+        .where(RecipeIngredient.recipe_id == recipe_id)
+    ).all()
+    out = _recipe_out(r)
+    out.ingredients = [
+        RecipeIngredientOut(
+            ingredient_id=ri.ingredient_id,
+            name=ing.name,
+            quantity=ri.quantity,
+            unit=ri.unit,
+        )
+        for ri, ing in rows
+    ]
+    return out
 
 
 @router.post("", response_model=RecipeOut)

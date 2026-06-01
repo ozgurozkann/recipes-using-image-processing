@@ -6,11 +6,19 @@ import { ConfirmModal } from "../components/Modal";
 import { toast, toastError } from "../components/Toast";
 import { getToken } from "../authStore";
 
+type RecipeIngredient = {
+  ingredient_id: number;
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
 type Recipe = {
   id: number; title: string; description: string; instructions: string;
   cooking_time: number; serving_count: number; difficulty: string;
   category_id: number | null; image_url: string;
   favorite_count: number; save_count: number; is_approved: boolean;
+  ingredients: RecipeIngredient[];
 };
 
 const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
@@ -133,6 +141,32 @@ export default function RecipeDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Ingredients */}
+      {item.ingredients && item.ingredients.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>🛒 Malzemeler</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+            {item.ingredients.map((ing, i) => (
+              <div key={i} className="card card-sm" style={{
+                display: "flex", alignItems: "center", gap: 10,
+                animation: `fadeUp 0.3s ${i * 0.04}s ease both`, transform: "none"
+              }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, var(--primary), var(--primary-dark))"
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, textTransform: "capitalize" }}>{ing.name}</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: 6 }}>
+                    {ing.quantity % 1 === 0 ? ing.quantity : ing.quantity.toFixed(2)} {ing.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Steps */}
       {steps.length > 0 && (

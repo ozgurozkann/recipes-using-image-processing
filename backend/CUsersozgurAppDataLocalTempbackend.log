@@ -1,0 +1,58 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\ozgur\\Desktop\\PROJELER\\Recipes-using-image-processing\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [3896] using WatchFiles
+INFO:     Started server process [14608]
+INFO:     Waiting for application startup.
+2026-06-01 05:15:56,134 INFO sqlalchemy.engine.Engine SELECT DATABASE()
+2026-06-01 05:15:56,135 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,135 INFO sqlalchemy.engine.Engine SELECT @@sql_mode
+2026-06-01 05:15:56,135 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,136 INFO sqlalchemy.engine.Engine SELECT @@lower_case_table_names
+2026-06-01 05:15:56,136 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,136 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-01 05:15:56,137 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`ingredient_categories`
+2026-06-01 05:15:56,137 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,144 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`ingredients`
+2026-06-01 05:15:56,144 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,146 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`recipe_categories`
+2026-06-01 05:15:56,146 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,147 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`recipes`
+2026-06-01 05:15:56,147 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,149 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`recipe_ingredients`
+2026-06-01 05:15:56,149 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,150 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`user_uploaded_images`
+2026-06-01 05:15:56,150 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,151 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`users`
+2026-06-01 05:15:56,151 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,152 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`favorite_recipes`
+2026-06-01 05:15:56,152 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,153 INFO sqlalchemy.engine.Engine DESCRIBE `recipes_db`.`saved_recipes`
+2026-06-01 05:15:56,153 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-06-01 05:15:56,155 INFO sqlalchemy.engine.Engine COMMIT
+2026-06-01 05:15:56,156 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-01 05:15:56,167 INFO sqlalchemy.engine.Engine SELECT users.id, users.full_name, users.email, users.password_hash, users.`role`, users.created_at 
+FROM users 
+ LIMIT %(param_1)s
+2026-06-01 05:15:56,167 INFO sqlalchemy.engine.Engine [generated in 0.00024s] {'param_1': 1}
+2026-06-01 05:15:56,179 INFO sqlalchemy.engine.Engine SELECT ingredient_categories.id, ingredient_categories.name 
+FROM ingredient_categories 
+ LIMIT %(param_1)s
+2026-06-01 05:15:56,179 INFO sqlalchemy.engine.Engine [generated in 0.00020s] {'param_1': 1}
+2026-06-01 05:15:56,180 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     Application startup complete.
+INFO:     127.0.0.1:50283 - "GET /api/v1/recipes?limit=3 HTTP/1.1" 404 Not Found
+2026-06-01 05:17:12,928 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-01 05:17:12,930 INFO sqlalchemy.engine.Engine SELECT recipes.id, recipes.title, recipes.description, recipes.instructions, recipes.cooking_time, recipes.serving_count, recipes.difficulty, recipes.category_id, recipes.image_url, recipes.created_by_user_id, recipes.is_approved, recipes.favorite_count, recipes.save_count, recipes.created_at 
+FROM recipes 
+WHERE recipes.is_approved = true ORDER BY recipes.created_at DESC
+2026-06-01 05:17:12,930 INFO sqlalchemy.engine.Engine [generated in 0.00018s] {}
+2026-06-01 05:17:14,314 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:50285 - "GET /recipes?limit=3 HTTP/1.1" 200 OK
+2026-06-01 05:17:35,573 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-01 05:17:35,573 INFO sqlalchemy.engine.Engine SELECT recipes.id, recipes.title, recipes.description, recipes.instructions, recipes.cooking_time, recipes.serving_count, recipes.difficulty, recipes.category_id, recipes.image_url, recipes.created_by_user_id, recipes.is_approved, recipes.favorite_count, recipes.save_count, recipes.created_at 
+FROM recipes 
+WHERE recipes.is_approved = true ORDER BY recipes.created_at DESC
+2026-06-01 05:17:35,573 INFO sqlalchemy.engine.Engine [cached since 22.64s ago] {}
+2026-06-01 05:17:36,999 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:50293 - "GET /recipes?limit=3 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app\main.py'. Reloading...
