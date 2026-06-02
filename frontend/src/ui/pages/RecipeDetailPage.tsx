@@ -18,6 +18,7 @@ type Recipe = {
   cooking_time: number; serving_count: number; difficulty: string;
   category_id: number | null; image_url: string;
   favorite_count: number; save_count: number; is_approved: boolean;
+  is_favorited?: boolean; is_saved?: boolean;
   ingredients: RecipeIngredient[];
 };
 
@@ -83,7 +84,11 @@ export default function RecipeDetailPage() {
   function load() {
     setLoading(true);
     api<Recipe>("GET", `/recipes/${id}`)
-      .then((r) => { setItem(r); })
+      .then((r) => {
+        setItem(r);
+        setFavorited(Boolean(r.is_favorited));
+        setSaved(Boolean(r.is_saved));
+      })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
   }
@@ -93,7 +98,7 @@ export default function RecipeDetailPage() {
   async function toggleFavorite() {
     if (!token) { toastError("Giriş gerekli", "Favorilere eklemek için giriş yapın."); return; }
     try {
-      const res = await api<{ favorited: boolean }>("POST", `/recipes/${id}/favorite`);
+      const res = await api<{ favorited: boolean }>(favorited ? "DELETE" : "POST", `/recipes/${id}/favorite`);
       setFavorited(res.favorited);
       toast(res.favorited ? "Favorilere eklendi ♡" : "Favorilerden çıkarıldı");
       load();
@@ -103,7 +108,7 @@ export default function RecipeDetailPage() {
   async function toggleSave() {
     if (!token) { toastError("Giriş gerekli", "Kaydetmek için giriş yapın."); return; }
     try {
-      const res = await api<{ saved: boolean }>("POST", `/recipes/${id}/save`);
+      const res = await api<{ saved: boolean }>(saved ? "DELETE" : "POST", `/recipes/${id}/save`);
       setSaved(res.saved);
       toast(res.saved ? "Tarif kaydedildi ⬇" : "Kayıt kaldırıldı");
       load();
@@ -183,7 +188,7 @@ export default function RecipeDetailPage() {
               className={`btn btn-lg ${saved ? "ok" : ""}`}
               onClick={() => saved ? setConfirmSave(true) : toggleSave()}
             >
-              {saved ? "✓ Kaydedildi" : "⬇ Kaydet"}
+              {saved ? "✓ Kaydetmeyi Kaldır" : "⬇ Kaydet"}
             </button>
           </div>
         </div>

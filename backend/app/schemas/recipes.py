@@ -41,6 +41,8 @@ class RecipeOut(BaseModel):
     is_approved: bool
     favorite_count: int
     save_count: int
+    is_favorited: bool = False
+    is_saved: bool = False
     ingredients: list[RecipeIngredientOut] = []
 
 

@@ -28,8 +28,20 @@ def get_current_user(
     return user
 
 
+def get_optional_user(
+    creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+    db: Session = Depends(get_db),
+) -> User | None:
+    if not creds or not creds.credentials:
+        return None
+    try:
+        user_id = int(decode_access_token(creds.credentials))
+    except ValueError:
+        return None
+    return db.get(User, user_id)
+
+
 def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     return user
-

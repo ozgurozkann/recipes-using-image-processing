@@ -59,10 +59,11 @@ interface Props {
   missingIngredients?: string[];
   style?: React.CSSProperties;
   onRefresh?: () => void;
+  savedView?: boolean;
 }
 
 export default function RecipeCard({
-  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh,
+  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh, savedView = false,
 }: Props) {
   async function handleFavorite(e: React.MouseEvent) {
     e.preventDefault();
@@ -76,7 +77,7 @@ export default function RecipeCard({
   async function handleSave(e: React.MouseEvent) {
     e.preventDefault();
     try {
-      const res = await api<{ saved: boolean }>("POST", `/recipes/${r.id}/save`);
+      const res = await api<{ saved: boolean }>(savedView ? "DELETE" : "POST", `/recipes/${r.id}/save`);
       toast(res.saved ? "Kaydedildi" : "Kayıt kaldırıldı");
       onRefresh?.();
     } catch (err: any) { toastError("Hata", err.message); }
@@ -183,7 +184,9 @@ export default function RecipeCard({
           </div>
           <div style={{ display: "flex", gap: 5 }}>
             <button className="btn btn-sm ghost" onClick={handleFavorite} title="Favorile">♡</button>
-            <button className="btn btn-sm ghost" onClick={handleSave} title="Kaydet">⬇</button>
+            <button className="btn btn-sm ghost" onClick={handleSave} title={savedView ? "Kaydetmeyi kaldır" : "Kaydet"}>
+              {savedView ? "×" : "⬇"}
+            </button>
             <Link to={`/recipes/${r.id}`} className="btn btn-sm primary">Gör →</Link>
           </div>
         </div>

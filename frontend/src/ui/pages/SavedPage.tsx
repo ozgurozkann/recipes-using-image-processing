@@ -43,7 +43,7 @@ export default function SavedPage() {
             <span className="badge ok">{items.length} kaydedilmiş tarif</span>
           </div>
           <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 8 }}>
-            {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} />)}
+            {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} savedView />)}
           </div>
         </>
       )}

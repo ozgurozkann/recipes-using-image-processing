@@ -5,7 +5,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, get_optional_user
 from ..models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, SavedRecipe, User
 from ..schemas.recipes import RecipeCreateIn, RecipeIngredientOut, RecipeOut, RecipeUpdateIn
 
@@ -13,7 +13,7 @@ from ..schemas.recipes import RecipeCreateIn, RecipeIngredientOut, RecipeOut, Re
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 
-def _recipe_out(r: Recipe) -> RecipeOut:
+def _recipe_out(r: Recipe, *, is_favorited: bool = False, is_saved: bool = False) -> RecipeOut:
     return RecipeOut(
         id=r.id,
         title=r.title,
@@ -28,6 +28,8 @@ def _recipe_out(r: Recipe) -> RecipeOut:
         is_approved=r.is_approved,
         favorite_count=r.favorite_count,
         save_count=r.save_count,
+        is_favorited=is_favorited,
+        is_saved=is_saved,
     )
 
 
@@ -69,16 +71,29 @@ def popular(db: Session = Depends(get_db)) -> dict[str, list[RecipeOut]]:
 
 
 @router.get("/{recipe_id}", response_model=RecipeOut)
-def get_recipe(recipe_id: int, db: Session = Depends(get_db)) -> RecipeOut:
+def get_recipe(
+    recipe_id: int,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+) -> RecipeOut:
     r = db.get(Recipe, recipe_id)
     if not r or not r.is_approved:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    is_favorited = False
+    is_saved = False
+    if user:
+        is_favorited = db.execute(
+            select(FavoriteRecipe.id).where(FavoriteRecipe.user_id == user.id, FavoriteRecipe.recipe_id == recipe_id)
+        ).scalar_one_or_none() is not None
+        is_saved = db.execute(
+            select(SavedRecipe.id).where(SavedRecipe.user_id == user.id, SavedRecipe.recipe_id == recipe_id)
+        ).scalar_one_or_none() is not None
     rows = db.execute(
         select(RecipeIngredient, Ingredient)
         .join(Ingredient, RecipeIngredient.ingredient_id == Ingredient.id)
         .where(RecipeIngredient.recipe_id == recipe_id)
     ).all()
-    out = _recipe_out(r)
+    out = _recipe_out(r, is_favorited=is_favorited, is_saved=is_saved)
     out.ingredients = [
         RecipeIngredientOut(
             ingredient_id=ri.ingredient_id,
@@ -211,4 +226,3 @@ def unsave(recipe_id: int, db: Session = Depends(get_db), user: User = Depends(g
     db.delete(existing)
     db.commit()
     return {"saved": False}
-

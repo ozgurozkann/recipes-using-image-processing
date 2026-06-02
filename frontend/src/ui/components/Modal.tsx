@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   isOpen: boolean;
@@ -22,16 +23,23 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 480
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth }}>
+      <div
+        className="modal"
+        style={{ maxWidth }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "modal-title" : undefined}
+      >
         <div className="modal-header">
-          {title && <h3 className="modal-title">{title}</h3>}
+          {title && <h3 id="modal-title" className="modal-title">{title}</h3>}
           <button className="modal-close" onClick={onClose} aria-label="Kapat">×</button>
         </div>
         <div className="modal-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
