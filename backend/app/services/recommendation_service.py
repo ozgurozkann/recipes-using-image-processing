@@ -19,7 +19,12 @@ class RecommendResult:
     save_count: int
 
 
-def recommend_by_ingredient_ids(db: Session, ingredient_ids: list[int], limit: int = 20) -> list[RecommendResult]:
+def recommend_by_ingredient_ids(
+    db: Session,
+    ingredient_ids: list[int],
+    limit: int = 20,
+    require_all_inputs: bool = False,
+) -> list[RecommendResult]:
     ingredient_ids = [int(x) for x in ingredient_ids if x]
     if not ingredient_ids:
         return []
@@ -44,6 +49,8 @@ def recommend_by_ingredient_ids(db: Session, ingredient_ids: list[int], limit: i
         recipe_ing_names = {ri.ingredient_id: ing.name for (ri, ing) in rows}
 
         if not recipe_ing_ids:
+            continue
+        if require_all_inputs and not input_set.issubset(set(recipe_ing_ids)):
             continue
 
         matched = [recipe_ing_names[i] for i in recipe_ing_ids if i in input_set]
@@ -80,4 +87,3 @@ def recommend_by_ingredient_ids(db: Session, ingredient_ids: list[int], limit: i
 
     results.sort(key=lambda r: (-r.match_score, -r.favorite_count, -r.save_count, r.title))
     return results[:limit]
-

@@ -1,53 +1,98 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
 import Spinner from "../components/Spinner";
 import { toastError, toast } from "../components/Toast";
 
-type DetectedIng = { name: string; confidence: number };
+type SelectedImage = { file: File; preview: string };
+type DetectedIng = { name: string; confidence: number; source?: string | null };
 type RecItem = RecipeCardData & {
-  recipeId: number; matchScore: number;
-  matchedIngredients: string[]; missingIngredients: string[];
-  favoriteCount: number; saveCount: number;
+  recipeId: number;
+  matchScore: number;
+  matchedIngredients: string[];
+  missingIngredients: string[];
+  favoriteCount: number;
+  saveCount: number;
+};
+type ImageRecommendResponse = {
+  items: RecItem[];
+  detectedIngredients: DetectedIng[];
 };
 
+function imageKey(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
 export default function ImageRecommendPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [images, setImages] = useState<SelectedImage[]>([]);
   const [detected, setDetected] = useState<DetectedIng[]>([]);
   const [items, setItems] = useState<RecItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const previewsRef = useRef<SelectedImage[]>([]);
 
-  function handleFile(f: File) {
-    setFile(f);
+  useEffect(() => {
+    previewsRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((image) => URL.revokeObjectURL(image.preview));
+    };
+  }, []);
+
+  function handleFiles(fileList: FileList | File[]) {
+    const incoming = Array.from(fileList).filter((file) => file.type.startsWith("image/"));
+    if (incoming.length === 0) return;
+
+    setImages((current) => {
+      const known = new Set(current.map((image) => imageKey(image.file)));
+      const additions = incoming
+        .filter((file) => !known.has(imageKey(file)))
+        .map((file) => ({ file, preview: URL.createObjectURL(file) }));
+      return [...current, ...additions];
+    });
     setItems([]);
     setDetected([]);
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(f);
+  }
+
+  function removeImage(index: number) {
+    setImages((current) => {
+      const next = [...current];
+      const [removed] = next.splice(index, 1);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return next;
+    });
+    setItems([]);
+    setDetected([]);
   }
 
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragging(false);
-    const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith("image/")) handleFile(f);
+    handleFiles(e.dataTransfer.files);
   }
 
   async function submit() {
-    if (!file) return;
+    if (images.length === 0) return;
     setLoading(true);
     setDetected([]);
     setItems([]);
     try {
       const fd = new FormData();
-      fd.append("file", file);
-      const out = await api<{ items: RecItem[] }>("POST", "/recommendations/by-image", fd, true);
-      toast("Analiz tamamlandı", `${out.items.length} tarif önerisi bulundu.`);
+      images.forEach((image) => fd.append("files", image.file));
+      const out = await api<ImageRecommendResponse>("POST", "/recommendations/by-images", fd, true);
+      toast(
+        "Analiz tamamlandı",
+        `${images.length} fotoğraf analiz edildi, ${out.items.length} tarif önerisi bulundu.`
+      );
+      setDetected(out.detectedIngredients ?? []);
       setItems(out.items.map((x) => ({
-        ...x, id: x.recipeId, favorite_count: x.favoriteCount, save_count: x.saveCount,
+        ...x,
+        id: x.recipeId,
+        favorite_count: x.favoriteCount,
+        save_count: x.saveCount,
       })));
     } catch (e: any) {
       toastError("Hata", e.message);
@@ -56,17 +101,19 @@ export default function ImageRecommendPage() {
     }
   }
 
+  const totalSizeKb = images.reduce((sum, image) => sum + image.file.size, 0) / 1024;
+
   return (
     <div>
       <div className="page-hero">
         <h1 className="page-title">📸 Fotoğraf ile <span>Öneri</span></h1>
-        <p className="page-sub">Malzeme fotoğrafını yükle, AI tanısın ve sana uygun tarifleri getirsin.</p>
+        <p className="page-sub">
+          Birden fazla malzeme fotoğrafı yükle, her biri ayrı analiz edilsin ve hepsini içeren tarifler gelsin.
+        </p>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "400px 1fr", alignItems: "start" }}>
-        {/* ── Left: Upload ── */}
+      <div className="grid" style={{ gridTemplateColumns: "minmax(320px, 400px) 1fr", alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Upload zone */}
           <div className="card" style={{ padding: 0, overflow: "hidden" }}>
             <div
               className={`upload-zone${dragging ? " dragging" : ""}`}
@@ -76,49 +123,121 @@ export default function ImageRecommendPage() {
               onClick={() => inputRef.current?.click()}
               style={{ margin: 0, borderRadius: 0, border: "none", borderBottom: "1px dashed var(--border)" }}
             >
-              <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }}
-                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-              <div className="upload-icon" style={{ animation: file ? "none" : "float 3s ease-in-out infinite" }}>
-                {file ? "✅" : "📂"}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files) handleFiles(e.target.files);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="upload-icon" style={{ animation: images.length ? "none" : "float 3s ease-in-out infinite" }}>
+                {images.length ? "✅" : "📂"}
               </div>
               <div className="upload-title">
-                {file ? file.name : "Dosyayı sürükle veya tıkla"}
+                {images.length ? `${images.length} fotoğraf seçildi` : "Dosyaları sürükle veya tıkla"}
               </div>
               <div className="upload-sub">
-                {file
-                  ? `${(file.size / 1024).toFixed(0)} KB · JPG, PNG, WEBP`
-                  : "JPG, PNG veya WEBP · Maks 10 MB"}
+                {images.length
+                  ? `${totalSizeKb.toFixed(0)} KB · JPG, PNG, WEBP`
+                  : "Birden fazla JPG, PNG veya WEBP yükleyebilirsin"}
               </div>
             </div>
 
-            {/* Preview */}
-            {preview && (
-              <div style={{ padding: "0 16px 16px" }}>
-                <img src={preview} alt="Önizleme" className="img-preview" style={{ marginTop: 16 }} />
+            {images.length > 0 && (
+              <div style={{ padding: 16 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+                    gap: 10,
+                  }}
+                >
+                  {images.map((image, index) => (
+                    <div key={imageKey(image.file)} style={{ position: "relative" }}>
+                      <img
+                        src={image.preview}
+                        alt={image.file.name}
+                        className="img-preview"
+                        style={{ aspectRatio: "1 / 1", height: "auto", objectFit: "cover", margin: 0 }}
+                      />
+                      <button
+                        type="button"
+                        className="btn icon"
+                        onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                        title="Fotoğrafı kaldır"
+                        aria-label="Fotoğrafı kaldır"
+                        style={{
+                          position: "absolute",
+                          right: 6,
+                          top: 6,
+                          width: 30,
+                          height: 30,
+                          background: "rgba(20,20,30,0.75)",
+                          color: "white",
+                          borderColor: "rgba(255,255,255,0.18)",
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div
+                        title={image.file.name}
+                        style={{
+                          marginTop: 6,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {image.file.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Action */}
-          <button className="btn primary btn-lg" onClick={submit}
-            disabled={!file || loading}
-            style={{ justifyContent: "center" }}>
-            {loading ? <><Spinner size="sm" /> Analiz ediliyor…</> : "🚀 Yükle ve Analiz Et"}
+          <button
+            className="btn primary btn-lg"
+            onClick={submit}
+            disabled={images.length === 0 || loading}
+            style={{ justifyContent: "center" }}
+          >
+            {loading ? <><Spinner size="sm" /> Fotoğraflar analiz ediliyor...</> : "🚀 Yükle ve Analiz Et"}
           </button>
 
-          {/* Detected ingredients */}
           {detected.length > 0 && (
             <div className="card" style={{ animation: "scaleIn 0.3s ease both" }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>🔍 Tespit Edilen Malzemeler</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {detected.map((d) => (
-                  <div key={d.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div key={`${d.name}-${d.source ?? ""}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</div>
+                      {d.source && (
+                        <div style={{ color: "var(--muted)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.source}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                       <div style={{ width: 80, height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${d.confidence * 100}%`,
-                          background: "linear-gradient(90deg, var(--primary), var(--ok))",
-                          borderRadius: 3, animation: "scoreGrow 0.6s ease both" }} />
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${d.confidence * 100}%`,
+                            background: "linear-gradient(90deg, var(--primary), var(--ok))",
+                            borderRadius: 3,
+                            animation: "scoreGrow 0.6s ease both",
+                          }}
+                        />
                       </div>
                       <span className="badge ok">{Math.round(d.confidence * 100)}%</span>
                     </div>
@@ -128,16 +247,14 @@ export default function ImageRecommendPage() {
             </div>
           )}
 
-          {/* Info */}
           <div className="card" style={{ background: "var(--primary-subtle)", borderColor: "rgba(124,92,255,0.25)" }}>
             <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.7 }}>
-              <strong style={{ color: "var(--primary-light)" }}>ℹ Şu an dummy mod</strong><br />
-              Model .env'de <code style={{ background: "var(--panel2)", padding: "1px 6px", borderRadius: 4 }}>IMAGE_RECOGNITION_MODE=keras</code> yapılarak gerçek Keras modeli ile değiştirilebilir.
+              <strong style={{ color: "var(--primary-light)" }}>ℹ Çoklu analiz</strong><br />
+              Her fotoğraf modele ayrı gönderilir. Sonuçlarda, tespit edilen malzemelerin tamamını içeren tarifler listelenir.
             </div>
           </div>
         </div>
 
-        {/* ── Right: Results ── */}
         <div>
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 280, gap: 20 }}>
@@ -148,8 +265,8 @@ export default function ImageRecommendPage() {
                 </div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>AI Analiz Ediyor…</div>
-                <div style={{ color: "var(--muted)", fontSize: 14 }}>Malzemeler tespit ediliyor, tarifler eşleştiriliyor</div>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Fotoğraflar tek tek analiz ediliyor...</div>
+                <div style={{ color: "var(--muted)", fontSize: 14 }}>Malzemeler birleştiriliyor, tarifler eşleştiriliyor</div>
               </div>
             </div>
           )}
@@ -158,16 +275,21 @@ export default function ImageRecommendPage() {
             <div className="empty card">
               <div className="empty-icon" style={{ animation: "float 3s ease-in-out infinite" }}>📸</div>
               <div className="empty-title">Fotoğraf yükleyip analiz et</div>
-              <div className="empty-sub">AI malzemeleri tespit edecek ve uygun tarifleri listeleyecek.</div>
+              <div className="empty-sub">AI malzemeleri tespit edecek ve hepsini içeren tarifleri listeleyecek.</div>
             </div>
           )}
 
           {!loading && items.length > 0 && (
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
-                  {items.length} Tarif Önerisi
-                </h2>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
+                    {items.length} Tarif Önerisi
+                  </h2>
+                  <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
+                    Tespit edilen tüm malzemeleri içeren tarifler
+                  </div>
+                </div>
                 <span className="badge ok" style={{ animation: "scaleIn 0.3s ease both" }}>Analiz tamamlandı ✓</span>
               </div>
               <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", margin: 0 }}>

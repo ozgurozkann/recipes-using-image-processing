@@ -22,3 +22,13 @@ class RecommendItemOut(BaseModel):
     favoriteCount: int
     saveCount: int
 
+
+class DetectedIngredientOut(BaseModel):
+    name: str
+    confidence: float
+    source: str | None = None
+
+
+class ImageRecommendOut(BaseModel):
+    items: list[RecommendItemOut]
+    detectedIngredients: list[DetectedIngredientOut] = Field(default_factory=list)
