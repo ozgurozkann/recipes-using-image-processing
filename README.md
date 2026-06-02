@@ -99,6 +99,23 @@ uvicorn backend.app.main:app --reload
 - Swagger: http://127.0.0.1:8000/docs
 - Seed admin: `admin@example.com` / `admin1234`
 
+Veritabani seed sistemi:
+```powershell
+# GitHub'daki seed.sql dosyasini MySQL'e yukler
+bash backend/seed.sh import
+
+# 3306'daki mevcut MySQL veritabanindan backend/seed.sql dosyasini yeniler
+bash backend/seed.sh dump
+```
+
+Varsayilan MySQL baglantisi: `root:root@127.0.0.1:3306/recipes_db`.
+Farkli makinede gerekirse ortam degiskenleriyle calistirin:
+```powershell
+$env:MYSQL_PASSWORD="sifre"
+$env:MYSQL_DATABASE="recipes_db"
+bash backend/seed.sh import
+```
+
 ### 2. Frontend
 
 ```powershell

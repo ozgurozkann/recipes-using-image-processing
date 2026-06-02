@@ -1,0 +1,58 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: recipes-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-recipes_db}
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/seed.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: recipes-backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-prod}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-change-me-for-docker}
+      APP_ACCESS_TOKEN_EXPIRE_MINUTES: ${APP_ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@db:3306/${MYSQL_DATABASE:-recipes_db}?charset=utf8mb4
+      PASSWORD_BCRYPT_ROUNDS: ${PASSWORD_BCRYPT_ROUNDS:-12}
+      IMAGE_RECOGNITION_MODE: ${IMAGE_RECOGNITION_MODE:-dummy}
+      KERAS_MODEL_PATH: ${KERAS_MODEL_PATH:-/app/vegetable-classification/vegetable_model.keras}
+      KERAS_LABELS_PATH: ${KERAS_LABELS_PATH:-/app/vegetable-classification/labels.txt}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: recipes-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_uploads:
+  mysql_data:
