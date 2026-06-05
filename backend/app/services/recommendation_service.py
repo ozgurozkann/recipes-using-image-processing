@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..models import Ingredient, Recipe, RecipeIngredient
@@ -30,26 +31,64 @@ def recommend_by_ingredient_ids(
         return []
 
     input_set = set(ingredient_ids)
-    ingredient_names = {
-        row.id: row.name
-        for row in db.execute(select(Ingredient).where(Ingredient.id.in_(ingredient_ids))).scalars().all()
-    }
 
-    recipes = db.execute(select(Recipe).where(Recipe.is_approved == True)).scalars().all()  # noqa: E712
+    # Step 1: find candidate recipe IDs via SQL — avoids loading all 21k recipes
+    match_subq = (
+        select(
+            RecipeIngredient.recipe_id,
+            func.count(RecipeIngredient.ingredient_id).label("match_count"),
+        )
+        .where(RecipeIngredient.ingredient_id.in_(ingredient_ids))
+        .group_by(RecipeIngredient.recipe_id)
+        .subquery()
+    )
+
+    candidate_q = select(match_subq.c.recipe_id)
+    if require_all_inputs:
+        candidate_q = candidate_q.where(match_subq.c.match_count >= len(input_set))
+
+    candidate_ids: list[int] = [r[0] for r in db.execute(candidate_q).all()]
+    if not candidate_ids:
+        return []
+
+    # Step 2: fetch only candidate recipes (single query)
+    recipes: dict[int, Recipe] = {
+        r.id: r
+        for r in db.execute(
+            select(Recipe).where(
+                Recipe.id.in_(candidate_ids),
+                Recipe.is_approved == True,  # noqa: E712
+            )
+        )
+        .scalars()
+        .all()
+    }
+    if not recipes:
+        return []
+
+    # Step 3: fetch all ingredient associations for candidates (single JOIN query)
+    rows = db.execute(
+        select(
+            RecipeIngredient.recipe_id,
+            RecipeIngredient.ingredient_id,
+            Ingredient.name,
+        )
+        .join(Ingredient, Ingredient.id == RecipeIngredient.ingredient_id)
+        .where(RecipeIngredient.recipe_id.in_(list(recipes.keys())))
+    ).all()
+
+    recipe_ingredients: dict[int, dict[int, str]] = defaultdict(dict)
+    for recipe_id, ing_id, ing_name in rows:
+        recipe_ingredients[recipe_id][ing_id] = ing_name
+
     results: list[RecommendResult] = []
 
-    for recipe in recipes:
-        rows = db.execute(
-            select(RecipeIngredient, Ingredient)
-            .join(Ingredient, Ingredient.id == RecipeIngredient.ingredient_id)
-            .where(RecipeIngredient.recipe_id == recipe.id)
-        ).all()
-
-        recipe_ing_ids = [ri.ingredient_id for (ri, _) in rows]
-        recipe_ing_names = {ri.ingredient_id: ing.name for (ri, ing) in rows}
-
-        if not recipe_ing_ids:
+    for recipe_id, recipe_ing_names in recipe_ingredients.items():
+        recipe = recipes.get(recipe_id)
+        if not recipe:
             continue
+
+        recipe_ing_ids = list(recipe_ing_names.keys())
         if require_all_inputs and not input_set.issubset(set(recipe_ing_ids)):
             continue
 
@@ -59,8 +98,6 @@ def recommend_by_ingredient_ids(
         match_ratio = len(matched) / max(1, len(recipe_ing_ids))
         missing_ratio = 1.0 - (len(missing) / max(1, len(recipe_ing_ids)))
 
-        # Weights from spec:
-        # match ratio: 70%, missing smallness: 15%, favorite: 10%, save: 5%
         fav_norm = min(1.0, recipe.favorite_count / 200.0)
         save_norm = min(1.0, recipe.save_count / 200.0)
         score = (

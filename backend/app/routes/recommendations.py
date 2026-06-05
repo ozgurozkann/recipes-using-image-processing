@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from pathlib import Path
@@ -71,7 +72,7 @@ async def _save_and_detect(
         path = uploads_dir / f"{user.id}_{int(time.time() * 1000)}_{index}_{filename}"
         path.write_bytes(data)
 
-        detected = service.detect(path)
+        detected = await asyncio.to_thread(service.detect, path)
         detected_by_file.append((filename, detected))
         db.add(
             UserUploadedImage(

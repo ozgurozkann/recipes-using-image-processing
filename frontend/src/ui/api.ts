@@ -13,7 +13,13 @@ export async function api<T>(method: string, path: string, body?: unknown, isFor
   });
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw new Error(data?.detail || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const detail = data?.detail;
+    const msg = Array.isArray(detail)
+      ? detail.map((d: any) => d.msg).join(", ")
+      : (typeof detail === "string" ? detail : `HTTP ${res.status}`);
+    throw new Error(msg);
+  }
   return data as T;
 }
 
