@@ -15,7 +15,7 @@ RUN pip install --upgrade pip \
     && pip install -r /app/backend/requirements.txt
 
 COPY backend /app/backend
-COPY vegetable-classification/vegetable_model.keras /app/vegetable-classification/vegetable_model.keras
+COPY vegetable-classification/merged_model.keras /app/vegetable-classification/merged_model.keras
 COPY vegetable-classification/labels.txt /app/vegetable-classification/labels.txt
 
 RUN mkdir -p /app/uploads

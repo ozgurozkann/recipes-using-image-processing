@@ -4,10 +4,10 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import matplotlib.pyplot as plt
 
-# Veri yolları
-train_dir = "dataset/Vegetable Images/train"
-val_dir = "dataset/Vegetable Images/validation"
-test_dir = "dataset/Vegetable Images/test"
+# Veri yolları — merge_datasets.py çalıştırıldıktan sonra merged_dataset kullan
+train_dir = "dataset/merged_dataset/train"
+val_dir   = "dataset/merged_dataset/validation"
+test_dir  = "dataset/merged_dataset/test"
 
 # Parametreler
 img_size = (224, 224)
@@ -91,8 +91,8 @@ test_loss, test_acc = model.evaluate(test_dataset)
 print(f"Test accuracy: {test_acc:.4f}")
 
 # Model kaydet
-model.save("vegetable_model.keras")
-print("Model kaydedildi: vegetable_model.keras")
+model.save("merged_model.keras")
+print("Model kaydedildi: merged_model.keras")
 
 # Sınıf isimlerini kaydet
 with open("labels.txt", "w", encoding="utf-8") as f:

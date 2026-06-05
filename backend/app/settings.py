@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     password_bcrypt_rounds: int = 12
 
     image_recognition_mode: str = "dummy"  # dummy | keras
-    keras_model_path: str = "./vegetable-classification/vegetable_model.keras"
+    keras_model_path: str = "./vegetable-classification/merged_model.keras"
     keras_labels_path: str = "./vegetable-classification/labels.txt"
 
 

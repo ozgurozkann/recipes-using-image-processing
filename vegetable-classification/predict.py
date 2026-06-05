@@ -5,7 +5,7 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 img_path = "kabak.png"
 
-model = tf.keras.models.load_model("vegetable_model.keras", compile=False)
+model = tf.keras.models.load_model("merged_model.keras", compile=False)
 
 with open("labels.txt", "r", encoding="utf-8") as f:
     class_names = [line.strip() for line in f.readlines()]
