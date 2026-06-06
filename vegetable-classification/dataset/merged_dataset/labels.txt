@@ -19,7 +19,6 @@ Bean
 Bean_pod
 Beetroot
 Bitter_Gourd
-BlackBerry
 Blackberry
 Blueberry
 Bottle_Gourd
@@ -59,7 +58,6 @@ Grape
 Grape_Blue
 Grape_Pink
 Grape_White
-Grape_pink
 Grapefruit_Pink
 Grapefruit_White
 Guava
@@ -129,4 +127,3 @@ Watermelon
 Zucchini
 Zucchini_Green
 Zucchini_dark
-orange

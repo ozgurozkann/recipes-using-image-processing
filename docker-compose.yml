@@ -31,7 +31,7 @@ services:
       APP_ACCESS_TOKEN_EXPIRE_MINUTES: ${APP_ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
       DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@db:3306/${MYSQL_DATABASE:-recipes_db}?charset=utf8mb4
       PASSWORD_BCRYPT_ROUNDS: ${PASSWORD_BCRYPT_ROUNDS:-12}
-      IMAGE_RECOGNITION_MODE: ${IMAGE_RECOGNITION_MODE:-dummy}
+      IMAGE_RECOGNITION_MODE: ${IMAGE_RECOGNITION_MODE:-keras}
       KERAS_MODEL_PATH: ${KERAS_MODEL_PATH:-/app/vegetable-classification/merged_model.keras}
       KERAS_LABELS_PATH: ${KERAS_LABELS_PATH:-/app/vegetable-classification/labels.txt}
     ports:
