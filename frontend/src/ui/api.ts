@@ -1,4 +1,4 @@
-import { getToken } from "./authStore";
+import { clearToken, getToken } from "./authStore";
 
 export async function api<T>(method: string, path: string, body?: unknown, isForm?: boolean): Promise<T> {
   const headers: Record<string, string> = {};
@@ -18,6 +18,13 @@ export async function api<T>(method: string, path: string, body?: unknown, isFor
     const msg = Array.isArray(detail)
       ? detail.map((d: any) => d.msg).join(", ")
       : (typeof detail === "string" ? detail : `HTTP ${res.status}`);
+    if (res.status === 401 && (msg === "Invalid token" || msg === "User not found")) {
+      clearToken();
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      throw new Error("Oturum gecersiz. Lutfen tekrar giris yapin.");
+    }
     throw new Error(msg);
   }
   return data as T;

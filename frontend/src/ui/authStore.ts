@@ -9,8 +9,11 @@ export function setToken(token: string) {
   window.location.href = "/";
 }
 
-export function logout() {
+export function clearToken() {
   localStorage.removeItem(key);
-  window.location.href = "/";
 }
 
+export function logout() {
+  clearToken();
+  window.location.href = "/";
+}

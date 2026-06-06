@@ -15,12 +15,14 @@ type RecItem = RecipeCardData & {
   saveCount: number;
 };
 type Selected = Record<number, { quantity: number; unit: string }>;
+const PAGE_SIZE = 10;
 
 export default function ManualRecommendPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selected, setSelected] = useState<Selected>({});
   const [items, setItems] = useState<RecItem[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -66,6 +68,7 @@ export default function ManualRecommendPage() {
 
   async function recommend() {
     setLoading(true);
+    setVisibleCount(PAGE_SIZE);
     try {
       const payload = {
         ingredients: Object.entries(selected).map(([id, v]) => ({
@@ -85,6 +88,8 @@ export default function ManualRecommendPage() {
   }
 
   const selectedCount = Object.keys(selected).length;
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
   if (initLoading) return <PageLoader />;
 
   return (
@@ -207,10 +212,10 @@ export default function ManualRecommendPage() {
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
                   {items.length} Tarif Önerisi
                 </h2>
-                <span className="badge ok">Skor sıralaması</span>
+                <span className="badge ok">{visibleItems.length}/{items.length} gösteriliyor</span>
               </div>
               <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", margin: 0 }}>
-                {items.map((x) => (
+                {visibleItems.map((x) => (
                   <RecipeCard
                     key={x.recipeId}
                     recipe={{ ...x, id: x.recipeId, favorite_count: x.favoriteCount, save_count: x.saveCount }}
@@ -220,6 +225,16 @@ export default function ManualRecommendPage() {
                   />
                 ))}
               </div>
+              {hasMore && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
+                  <button
+                    className="btn btn-lg"
+                    onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, items.length))}
+                  >
+                    Daha Fazla Göster
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
