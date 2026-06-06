@@ -59,16 +59,17 @@ interface Props {
   missingIngredients?: string[];
   style?: React.CSSProperties;
   onRefresh?: () => void;
+  favoriteView?: boolean;
   savedView?: boolean;
 }
 
 export default function RecipeCard({
-  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh, savedView = false,
+  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh, favoriteView = false, savedView = false,
 }: Props) {
   async function handleFavorite(e: React.MouseEvent) {
     e.preventDefault();
     try {
-      const res = await api<{ favorited: boolean }>("POST", `/recipes/${r.id}/favorite`);
+      const res = await api<{ favorited: boolean }>(favoriteView ? "DELETE" : "POST", `/recipes/${r.id}/favorite`);
       toast(res.favorited ? "Favorilere eklendi" : "Favorilerden çıkarıldı");
       onRefresh?.();
     } catch (err: any) { toastError("Hata", err.message); }
@@ -183,7 +184,9 @@ export default function RecipeCard({
             <span>⬇ {r.save_count}</span>
           </div>
           <div style={{ display: "flex", gap: 5 }}>
-            <button className="btn btn-sm ghost" onClick={handleFavorite} title="Favorile">♡</button>
+            <button className="btn btn-sm ghost" onClick={handleFavorite} title={favoriteView ? "Favorilerden kaldır" : "Favorile"}>
+              {favoriteView ? "×" : "♡"}
+            </button>
             <button className="btn btn-sm ghost" onClick={handleSave} title={savedView ? "Kaydetmeyi kaldır" : "Kaydet"}>
               {savedView ? "×" : "⬇"}
             </button>

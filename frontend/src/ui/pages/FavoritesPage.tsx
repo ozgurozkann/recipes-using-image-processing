@@ -43,7 +43,7 @@ export default function FavoritesPage() {
             <span className="badge primary">{items.length} favori tarif</span>
           </div>
           <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 8 }}>
-            {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} />)}
+            {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} favoriteView />)}
           </div>
         </>
       )}
