@@ -21,7 +21,16 @@ class DetectedIngredient:
 
 # ── Model sınıf adı → Türkçe malzeme adı eşlemesi ──────────────────────────
 _LABEL_TO_TR: dict[str, str] = {
+    # Et / Protein
+    "beef":                 "dana eti",
+    "chicken":              "tavuk",
+    "egg":                  "yumurta",
+    "fish":                 "balık",
+    "pork":                 "domuz eti",
+    "shrimp":               "karides",
+    "tofu":                 "tofu",
     # Sebzeler
+    "garlic":               "sarımsak",
     "bean":                 "fasulye",
     "bean_pod":             "fasulye",
     "bitter_gourd":         "acı kabak",
@@ -106,6 +115,7 @@ _LABEL_TO_TR: dict[str, str] = {
     "huckleberry":          "yaban mersini",
     "kaki":                 "hurma eriği",
     "kiwi":                 "kivi",
+    "kumquat":              "kumkat",
     "kumquats":             "kumkat",
     "lemon":                "limon",
     "lemon_meyer":          "meyer limonu",

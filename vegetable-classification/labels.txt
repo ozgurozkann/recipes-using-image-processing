@@ -17,6 +17,7 @@ Banana_Lady_Finger
 Banana_Red
 Bean
 Bean_pod
+Beef
 Beetroot
 Bitter_Gourd
 Blackberry
@@ -44,12 +45,16 @@ Cherry_Wax_Black
 Cherry_Wax_Red
 Cherry_Wax_Yellow
 Chestnut
+Chicken
 Clementine
 Cocos
 Corn
 Cucumber
 Dates
+Egg
 Fig
+Fish
+Garlic
 Ginger
 Ginger_Root
 Gooseberry
@@ -66,6 +71,7 @@ Huckleberry
 Kaki
 Kiwi
 Kohlrabi
+Kumquat
 Kumquats
 Lemon
 Lemon_Meyer
@@ -109,6 +115,7 @@ Pitahaya_Red
 Plum
 Pomegranate
 Pomelo_Sweetie
+Pork
 Potato
 Pumpkin
 Quince
@@ -117,10 +124,12 @@ Rambutan
 Raspberry
 Redcurrant
 Salak
+Shrimp
 Strawberry
 Strawberry_Wedge
 Tamarillo
 Tangelo
+Tofu
 Tomato
 Walnut
 Watermelon
