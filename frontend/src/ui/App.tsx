@@ -68,7 +68,7 @@ export default function App() {
               <nav className="topnav-links hidden md:flex">
                 <NavLink to="/recipes">Tarifler</NavLink>
                 <NavLink to="/recipes/popular">Popüler</NavLink>
-                <NavLink to="/recommend">Öneri</NavLink>
+                {token && <NavLink to="/recommend">Öneri</NavLink>}
                 {token && <NavLink to="/my-recipes">Tariflerim</NavLink>}
                 {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
                 {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
@@ -78,13 +78,6 @@ export default function App() {
 
           {/* Right: Actions */}
           <div className="topnav-actions">
-            {!isAuthPage && (
-              <label className="topnav-search hidden md:flex" aria-label="Ara">
-                <span className="material-symbols-outlined">search</span>
-                <input placeholder="Tarif ara..." type="search" />
-              </label>
-            )}
-
             {token ? (
               <>
                 <Link className="topnav-icon-btn" to="/favorites" title="Favoriler">
@@ -117,7 +110,7 @@ export default function App() {
           <nav className="flex md:hidden gap-4 px-5 pb-3 overflow-x-auto scrollbar-hide" style={{ borderTop: "1px solid rgba(28,27,27,0.05)" }}>
             <NavLink to="/recipes">Tarifler</NavLink>
             <NavLink to="/recipes/popular">Popüler</NavLink>
-            <NavLink to="/recommend">Öneri</NavLink>
+            {token && <NavLink to="/recommend">Öneri</NavLink>}
             {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
             {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
           </nav>
@@ -139,8 +132,8 @@ export default function App() {
           <Route path="/my-recipes" element={<RequireAuth><MyRecipesPage /></RequireAuth>} />
           <Route path="/favorites" element={<RequireAuth><FavoritesPage /></RequireAuth>} />
           <Route path="/saved" element={<RequireAuth><SavedPage /></RequireAuth>} />
-          <Route path="/recommend" element={<CombinedRecommendPage />} />
-          <Route path="/recommend/manual" element={<ManualRecommendPage />} />
+          <Route path="/recommend" element={<RequireAuth><CombinedRecommendPage /></RequireAuth>} />
+          <Route path="/recommend/manual" element={<RequireAuth><ManualRecommendPage /></RequireAuth>} />
           <Route path="/recommend/image" element={<RequireAuth><ImageRecommendPage /></RequireAuth>} />
           <Route path="/admin" element={<RequireAuth><AdminPage /></RequireAuth>} />
         </Routes>
