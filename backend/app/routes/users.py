@@ -57,8 +57,6 @@ async def upload_avatar(
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Yalnızca görsel dosyası yüklenebilir")
     data = await file.read()
-    if len(data) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Dosya boyutu 5 MB'ı aşamaz")
     AVATARS_DIR.mkdir(parents=True, exist_ok=True)
     ext = Path(file.filename or "avatar.jpg").suffix or ".jpg"
     filename = f"avatar_{user.id}_{int(time.time() * 1000)}{ext}"

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
@@ -26,6 +26,12 @@ export default function AddRecipePage() {
   const [category_id, setCategoryId] = useState<number | null>(null);
   const [image_url, setImageUrl] = useState("");
   const [selected, setSelected] = useState<Record<number, { quantity: number; unit: string }>>({});
+  const [newIngName, setNewIngName] = useState("");
+  const [newIngUnit, setNewIngUnit] = useState("adet");
+  const [addingIng, setAddingIng] = useState(false);
+  const [imgUploading, setImgUploading] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -49,6 +55,42 @@ export default function AddRecipePage() {
     setSelected((s) => { const n = { ...s }; if (n[i.id]) delete n[i.id]; else n[i.id] = { quantity: 1, unit: i.unit_type }; return n; });
   }
 
+  async function addNewIngredient() {
+    const name = newIngName.trim();
+    if (!name) return;
+    setAddingIng(true);
+    try {
+      const created = await api<Ingredient>("POST", "/ingredients/suggest", { name, unit_type: newIngUnit, category_id: null });
+      setIngredients((prev) => prev.some((x) => x.id === created.id) ? prev : [...prev, created]);
+      setSelected((s) => ({ ...s, [created.id]: { quantity: 1, unit: created.unit_type } }));
+      setIngSearch("");
+      setNewIngName("");
+      setNewIngUnit("adet");
+      toast("Malzeme eklendi", `"${created.name}" listeye eklendi ve seçildi.`);
+    } catch (e: any) {
+      toastError("Hata", e.message);
+    } finally {
+      setAddingIng(false);
+    }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImgUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await api<{ url: string }>("POST", "/recipes/upload-image", fd, true);
+      setImageUrl(res.url);
+    } catch (err: any) {
+      toastError("Yükleme hatası", err.message);
+    } finally {
+      setImgUploading(false);
+      e.target.value = "";
+    }
+  }
+
   async function submit() {
     if (!title.trim()) { toastError("Başlık gerekli", "Lütfen tarif adını girin."); return; }
     setLoading(true);
@@ -58,9 +100,9 @@ export default function AddRecipePage() {
         difficulty, category_id, image_url,
         ingredients: Object.entries(selected).map(([id, v]) => ({ ingredient_id: Number(id), quantity: v.quantity, unit: v.unit })),
       };
-      const r = await api<{ id: number }>("POST", "/recipes", payload);
-      toast("Tarif eklendi!", "Admin değilsen onay bekleyebilir.");
-      navigate(`/recipes/${r.id}`);
+      await api<{ id: number }>("POST", "/recipes", payload);
+      setSubmitted(true);
+      setTimeout(() => navigate("/"), 3000);
     } catch (e: any) {
       toastError("Hata", e.message);
     } finally {
@@ -69,6 +111,30 @@ export default function AddRecipePage() {
   }
 
   const selectedCount = Object.keys(selected).length;
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: "linear-gradient(135deg, var(--md-sys-color-primary-fixed) 0%, #fff 60%)" }}>
+        <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center shadow-2xl shadow-primary/30 mb-8 animate-bounce" style={{ animationDuration: "1.2s", animationIterationCount: 1 }}>
+          <span className="material-symbols-outlined text-white" style={{ fontSize: 48 }}>check</span>
+        </div>
+        <h1 className="text-3xl font-bold text-on-surface mb-3">Tarifiniz Gönderildi!</h1>
+        <p className="text-on-surface-variant text-base max-w-sm mb-2">
+          Tarifiniz <strong>admin onayına</strong> gönderildi.
+        </p>
+        <p className="text-on-surface-variant text-sm max-w-sm mb-10">
+          Onaylandıktan sonra yayınlanacak ve diğer kullanıcılar görebilecek.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-primary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+        >
+          <span className="material-symbols-outlined text-sm">home</span>Ana Sayfaya Dön
+        </button>
+        <p className="text-xs text-on-surface-variant mt-6 opacity-60">3 saniye içinde yönlendirileceksin…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20">
@@ -142,8 +208,32 @@ export default function AddRecipePage() {
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Görsel URL (opsiyonel)</label>
-                <input className={inputClass} value={image_url} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Tarif Görseli (opsiyonel)</label>
+                <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                {image_url ? (
+                  <div className="relative rounded-xl overflow-hidden border border-outline-variant/50">
+                    <img src={image_url} alt="Önizleme" className="w-full h-36 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-white" style={{ fontSize: 14 }}>close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => imgInputRef.current?.click()}
+                    disabled={imgUploading}
+                    className="w-full py-6 border-2 border-dashed border-outline-variant/50 rounded-xl flex flex-col items-center gap-2 text-on-surface-variant hover:border-primary/40 hover:bg-primary/5 transition-all disabled:opacity-60"
+                  >
+                    {imgUploading
+                      ? <><span className="spinner" style={{ width: 20, height: 20 }} /><span className="text-xs">Yükleniyor…</span></>
+                      : <><span className="material-symbols-outlined text-2xl">add_photo_alternate</span><span className="text-xs font-medium">Fotoğraf yükle</span></>
+                    }
+                  </button>
+                )}
               </div>
             </div>
 
@@ -190,6 +280,46 @@ export default function AddRecipePage() {
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
                 <input className={`${inputClass} pl-9`} placeholder="Malzeme ara…" value={ingSearch} onChange={(e) => setIngSearch(e.target.value)} />
               </div>
+              {/* Yeni malzeme ekleme — arama eşleşmeyince göster */}
+              {ingSearch.trim() && filteredIngs.length === 0 && (
+                <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+                  <p className="text-xs font-semibold text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">add_circle</span>
+                    "{ingSearch}" bulunamadı — yeni malzeme olarak ekle
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Malzeme adı</label>
+                      <input
+                        className={inputClass}
+                        value={newIngName || ingSearch}
+                        onChange={(e) => setNewIngName(e.target.value)}
+                        placeholder="ör: rezene"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Birim</label>
+                      <input
+                        className={inputClass}
+                        value={newIngUnit}
+                        onChange={(e) => setNewIngUnit(e.target.value)}
+                        placeholder="adet, gram, ml…"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { if (!newIngName) setNewIngName(ingSearch); addNewIngredient(); }}
+                    disabled={addingIng}
+                    className="w-full py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    {addingIng
+                      ? <><span className="spinner" style={{ width: 12, height: 12 }} />Ekleniyor…</>
+                      : <><span className="material-symbols-outlined text-sm">add</span>Malzemeyi Ekle ve Seç</>
+                    }
+                  </button>
+                </div>
+              )}
+
               <div className="max-h-[50vh] overflow-y-auto custom-scrollbar space-y-4 pr-1">
                 {categories.map((c) => {
                   const list = grouped.get(c.id) || [];

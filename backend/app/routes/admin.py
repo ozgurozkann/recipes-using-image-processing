@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user, require_admin
-from ..models import Recipe, User
-from ..schemas.recipes import RecipeOut
+from ..models import Ingredient, Recipe, RecipeIngredient, User
+from ..schemas.recipes import RecipeIngredientOut, RecipeOut
 
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -58,6 +58,24 @@ def recipes(skip: int = 0, limit: int = 100, q: str = "", db: Session = Depends(
         "total": total,
         "has_more": skip + limit < total,
     }
+
+
+@router.get("/recipes/{recipe_id}", response_model=RecipeOut)
+def get_recipe_detail(recipe_id: int, db: Session = Depends(get_db)) -> RecipeOut:
+    r = db.get(Recipe, recipe_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    rows = db.execute(
+        select(RecipeIngredient, Ingredient)
+        .join(Ingredient, RecipeIngredient.ingredient_id == Ingredient.id)
+        .where(RecipeIngredient.recipe_id == recipe_id)
+    ).all()
+    out = _recipe_out(r)
+    out.ingredients = [
+        RecipeIngredientOut(ingredient_id=ri.ingredient_id, name=ing.name, quantity=ri.quantity, unit=ri.unit)
+        for ri, ing in rows
+    ]
+    return out
 
 
 @router.get("/pending-recipes", response_model=dict[str, list[RecipeOut]])

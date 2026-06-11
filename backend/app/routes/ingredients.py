@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import require_admin
-from ..models import Ingredient, IngredientCategory
+from ..deps import get_current_user, require_admin
+from ..models import Ingredient, IngredientCategory, User
 from ..schemas.ingredients import (
     IngredientCategoryOut,
     IngredientCreateIn,
@@ -67,6 +67,24 @@ def delete_category(category_id: int, db: Session = Depends(get_db)) -> dict[str
     db.delete(c)
     db.commit()
     return {"deleted": True}
+
+
+@router.post("/suggest", response_model=IngredientOut)
+def suggest_ingredient(
+    payload: IngredientCreateIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> IngredientOut:
+    """Giriş yapmış her kullanıcı yeni malzeme önerebilir. Aynı isim varsa mevcut kaydı döner."""
+    name = payload.name.strip().lower()
+    existing = db.execute(select(Ingredient).where(Ingredient.name == name)).scalar_one_or_none()
+    if existing:
+        return IngredientOut.model_validate(existing)
+    item = Ingredient(name=name, category_id=payload.category_id, unit_type=payload.unit_type or "adet")
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return IngredientOut.model_validate(item)
 
 
 @router.post("", response_model=IngredientOut, dependencies=[Depends(require_admin)])

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,26 @@ from ..models import FavoriteRecipe, Ingredient, Recipe, RecipeIngredient, Recip
 from ..schemas.recipes import RecipeCreateIn, RecipeIngredientOut, RecipeOut, RecipeUpdateIn, ReviewIn, ReviewOut
 
 
+import time as _time
+
 router = APIRouter(prefix="/recipes", tags=["recipes"])
+
+RECIPE_IMGS_DIR = Path("uploads/recipes")
+
+
+@router.post("/upload-image", response_model=dict[str, str])
+async def upload_recipe_image(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Yalnızca görsel dosyası yüklenebilir")
+    data = await file.read()
+    RECIPE_IMGS_DIR.mkdir(parents=True, exist_ok=True)
+    ext = Path(file.filename or "photo.jpg").suffix or ".jpg"
+    filename = f"recipe_{user.id}_{int(_time.time() * 1000)}{ext}"
+    (RECIPE_IMGS_DIR / filename).write_bytes(data)
+    return {"url": f"/uploads/recipes/{filename}"}
 
 
 def _recipe_out(r: Recipe, *, is_favorited: bool = False, is_saved: bool = False) -> RecipeOut:
@@ -61,28 +82,36 @@ def list_recipes(
 
 @router.get("/popular", response_model=dict[str, list[RecipeOut]])
 def popular(db: Session = Depends(get_db)) -> dict[str, list[RecipeOut]]:
-    # avg_rating ve review_count subquery
-    review_sub = (
-        select(
-            RecipeReview.recipe_id,
-            func.avg(RecipeReview.rating).label("avg_rating"),
-            func.count(RecipeReview.id).label("review_count"),
+    try:
+        review_sub = (
+            select(
+                RecipeReview.recipe_id,
+                func.avg(RecipeReview.rating).label("avg_rating"),
+                func.count(RecipeReview.id).label("review_count"),
+            )
+            .group_by(RecipeReview.recipe_id)
+            .subquery()
         )
-        .group_by(RecipeReview.recipe_id)
-        .subquery()
-    )
-    rows = db.execute(
-        select(Recipe, review_sub.c.avg_rating, review_sub.c.review_count)
-        .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
-        .where(Recipe.is_approved == True)  # noqa: E712
-        .limit(200)
-    ).all()
+        rows = db.execute(
+            select(Recipe, review_sub.c.avg_rating, review_sub.c.review_count)
+            .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
+            .where(Recipe.is_approved == True)  # noqa: E712
+            .limit(200)
+        ).all()
+        rows = [(r, avg_r, rev_cnt) for r, avg_r, rev_cnt in rows]
+    except Exception:
+        # recipe_reviews tablosu yoksa veya sorgu başarısız olursa sade sıralama yap
+        db.rollback()
+        simple = db.execute(
+            select(Recipe).where(Recipe.is_approved == True).limit(200)  # noqa: E712
+        ).scalars().all()
+        rows = [(r, None, None) for r in simple]
 
-    def _score(r: Recipe, avg_r: float | None, rev_cnt: int | None) -> float:
+    def _score(r: Recipe, avg_r: object, rev_cnt: object) -> float:
         fav  = min(1.0, (r.favorite_count or 0) / 200.0)
         sav  = min(1.0, (r.save_count or 0) / 200.0)
-        rat  = ((avg_r or 0) / 5.0)
-        rcnt = min(1.0, (rev_cnt or 0) / 50.0)
+        rat  = float(avg_r or 0) / 5.0   # MySQL avg() Decimal döner, float'a çevir
+        rcnt = min(1.0, int(rev_cnt or 0) / 50.0)
         return fav * 0.40 + sav * 0.25 + rat * 0.25 + rcnt * 0.10
 
     ranked = sorted(rows, key=lambda t: _score(t[0], t[1], t[2]), reverse=True)[:30]

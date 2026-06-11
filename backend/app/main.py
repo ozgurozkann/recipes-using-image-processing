@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from .database import engine
 from .models import Base  # noqa: F401
-from .routes import admin, auth, ingredients, recommendations, recipes, users
+from .routes import admin, auth, images, ingredients, recommendations, recipes, users
 from .seed import seed_if_empty
 
 UPLOADS_DIR = Path("uploads")
@@ -23,6 +23,46 @@ def _migrate_avatar_url() -> None:
             conn.commit()
         except Exception:
             pass  # kolon zaten var
+
+
+def _migrate_create_recipe_reviews() -> None:
+    """recipe_reviews tablosu yoksa oluşturur (eski volume'lar için)."""
+    url = str(engine.url)
+    with engine.connect() as conn:
+        if url.startswith("mysql"):
+            try:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS recipe_reviews (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        recipe_id INT NOT NULL,
+                        user_id INT NOT NULL,
+                        rating INT NOT NULL,
+                        comment VARCHAR(1000) NOT NULL DEFAULT '',
+                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        KEY ix_recipe_reviews_recipe_id (recipe_id),
+                        CONSTRAINT recipe_reviews_ibfk_1 FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE,
+                        CONSTRAINT recipe_reviews_ibfk_2 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+        elif url.startswith("sqlite"):
+            try:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS recipe_reviews (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        recipe_id INTEGER NOT NULL,
+                        user_id INTEGER NOT NULL,
+                        rating INTEGER NOT NULL,
+                        comment VARCHAR(1000) DEFAULT '',
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
 
 def _migrate_reviews_drop_unique() -> None:
@@ -82,6 +122,7 @@ def create_app() -> FastAPI:
         Base.metadata.create_all(bind=engine)
         UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
         _migrate_avatar_url()
+        _migrate_create_recipe_reviews()
         _migrate_reviews_drop_unique()
         from .database import SessionLocal
 
@@ -92,6 +133,7 @@ def create_app() -> FastAPI:
     app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
     app.include_router(auth.router)
+    app.include_router(images.router)
     app.include_router(ingredients.router)
     app.include_router(recipes.router)
     app.include_router(recommendations.router)

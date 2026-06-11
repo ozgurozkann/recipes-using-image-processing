@@ -57,6 +57,8 @@ export default function AdminPage() {
   const [confirmReject, setConfirmReject] = useState<Recipe | null>(null);
   const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState<Recipe | null>(null);
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
+  const [previewRecipe, setPreviewRecipe] = useState<Recipe | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   async function refresh() {
     try {
@@ -170,8 +172,22 @@ export default function AdminPage() {
   }
 
   async function approve(r: Recipe) {
-    try { await api("PUT", `/admin/recipes/${r.id}/approve`); toast("Tarif onaylandı", r.title); refresh(); }
-    catch (e: any) { toastError("Hata", e.message); }
+    try {
+      await api("PUT", `/admin/recipes/${r.id}/approve`);
+      toast("Tarif onaylandı", r.title);
+      setPreviewRecipe(null);
+      refresh();
+    } catch (e: any) { toastError("Hata", e.message); }
+  }
+
+  async function openPreview(r: Recipe) {
+    setPreviewLoading(true);
+    setPreviewRecipe(r);
+    try {
+      const full = await api<Recipe>("GET", `/admin/recipes/${r.id}`);
+      setPreviewRecipe(full);
+    } catch { /* mevcut veri yeterli */ }
+    finally { setPreviewLoading(false); }
   }
 
   async function reject(r: Recipe) {
@@ -410,7 +426,8 @@ export default function AdminPage() {
                 {filteredRecipes.map((r) => (
                   <RecipeRow key={r.id} recipe={r} author={r.created_by_user_id ? userById.get(r.created_by_user_id)?.email : "Seed"}
                     onEdit={() => loadRecipeForEdit(r)} onApprove={() => approve(r)}
-                    onReject={() => setConfirmReject(r)} onDelete={() => setConfirmDeleteRecipe(r)} roleOk={roleOk} />
+                    onReject={() => setConfirmReject(r)} onDelete={() => setConfirmDeleteRecipe(r)}
+                    onPreview={() => openPreview(r)} roleOk={roleOk} />
                 ))}
                 {recipeHasMore && (
                   <button className="w-full py-3 text-primary text-sm font-semibold hover:underline flex items-center justify-center gap-2"
@@ -439,7 +456,8 @@ export default function AdminPage() {
                 {pending.map((r) => (
                   <RecipeRow key={r.id} recipe={r} author={r.created_by_user_id ? userById.get(r.created_by_user_id)?.email : "Seed"}
                     onEdit={() => loadRecipeForEdit(r)} onApprove={() => approve(r)}
-                    onReject={() => setConfirmReject(r)} onDelete={() => setConfirmDeleteRecipe(r)} roleOk={roleOk} />
+                    onReject={() => setConfirmReject(r)} onDelete={() => setConfirmDeleteRecipe(r)}
+                    onPreview={() => openPreview(r)} roleOk={roleOk} />
                 ))}
               </div>
             )}
@@ -575,6 +593,97 @@ export default function AdminPage() {
         )}
       </main>
 
+      {/* Recipe Preview Modal */}
+      {previewRecipe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setPreviewRecipe(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Hero image */}
+            <div className="relative h-52 rounded-t-3xl overflow-hidden flex-shrink-0">
+              <img src={getRecipePhoto(previewRecipe, 800, 400)} alt={previewRecipe.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <button onClick={() => setPreviewRecipe(null)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors">
+                <span className="material-symbols-outlined text-white text-sm">close</span>
+              </button>
+              <div className="absolute bottom-0 left-0 p-5">
+                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-2 ${previewRecipe.is_approved ? "bg-primary text-white" : "bg-secondary-fixed text-on-secondary-fixed"}`}>
+                  {previewRecipe.is_approved ? "Onaylı" : "Onay Bekliyor"}
+                </span>
+                <h2 className="text-xl font-bold text-white leading-snug">{previewRecipe.title}</h2>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {previewLoading && <p className="text-center text-sm text-on-surface-variant">Detaylar yükleniyor…</p>}
+
+              {/* Meta */}
+              <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant">
+                {previewRecipe.cooking_time > 0 && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">schedule</span>{previewRecipe.cooking_time} dk</span>}
+                {previewRecipe.serving_count > 0 && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">group</span>{previewRecipe.serving_count} kişi</span>}
+                {previewRecipe.difficulty && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">signal_cellular_alt</span>{{ easy: "Kolay", medium: "Orta", hard: "Zor" }[previewRecipe.difficulty] || previewRecipe.difficulty}</span>}
+              </div>
+
+              {/* Description */}
+              {previewRecipe.description && <p className="text-sm text-on-surface-variant leading-relaxed">{previewRecipe.description}</p>}
+
+              {/* Ingredients */}
+              {previewRecipe.ingredients && previewRecipe.ingredients.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-sm text-on-surface mb-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-primary text-base">shopping_basket</span>Malzemeler
+                  </h3>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {previewRecipe.ingredients.map((ing, i) => (
+                      <div key={i} className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-lg text-xs">
+                        <div className="w-2 h-2 rounded-full bg-secondary flex-shrink-0" />
+                        <span className="font-medium text-on-surface capitalize">{ing.name}</span>
+                        <span className="text-on-surface-variant ml-auto">{ing.quantity} {ing.unit}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Instructions */}
+              {previewRecipe.instructions && (
+                <div>
+                  <h3 className="font-semibold text-sm text-on-surface mb-2 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-primary text-base">restaurant_menu</span>Hazırlanışı
+                  </h3>
+                  <ol className="space-y-2">
+                    {previewRecipe.instructions.split(/\n+/).filter(Boolean).map((step, i) => (
+                      <li key={i} className="flex gap-3 text-sm text-on-surface-variant">
+                        <span className="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                        <p className="leading-relaxed pt-0.5">{step}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2 border-t border-outline-variant/30">
+                {!previewRecipe.is_approved && (
+                  <button onClick={() => approve(previewRecipe)} className="flex-1 py-3 bg-primary text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>Onayla
+                  </button>
+                )}
+                {previewRecipe.is_approved && (
+                  <button onClick={() => { setConfirmReject(previewRecipe); setPreviewRecipe(null); }} className="flex-1 py-3 border border-secondary/30 text-secondary rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-secondary-fixed/30 transition-colors">
+                    <span className="material-symbols-outlined text-sm">undo</span>Onayı Kaldır
+                  </button>
+                )}
+                <button onClick={() => { loadRecipeForEdit(previewRecipe); setPreviewRecipe(null); }} className="flex-1 py-3 border border-outline-variant text-on-surface-variant rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors">
+                  <span className="material-symbols-outlined text-sm">edit</span>Düzenle
+                </button>
+                <button onClick={() => { setConfirmDeleteRecipe(previewRecipe); setPreviewRecipe(null); }} className="py-3 px-4 border border-error/30 text-error rounded-xl font-bold text-sm flex items-center justify-center hover:bg-error-container transition-colors">
+                  <span className="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmModal isOpen={!!confirmReject} onClose={() => setConfirmReject(null)} onConfirm={() => confirmReject && reject(confirmReject)} title="Tarifi beklemeye al" message={`"${confirmReject?.title}" tarifini onaysız duruma almak istiyor musun?`} confirmLabel="Onaysız yap" confirmClass="btn danger" />
       <ConfirmModal isOpen={!!confirmDeleteRecipe} onClose={() => setConfirmDeleteRecipe(null)} onConfirm={() => confirmDeleteRecipe && deleteRecipe(confirmDeleteRecipe)} title="Tarifi sil" message={`"${confirmDeleteRecipe?.title}" tarifini kalıcı olarak silmek istiyor musun?`} confirmLabel="Sil" confirmClass="btn danger" />
       <ConfirmModal isOpen={!!confirmDeleteUser} onClose={() => setConfirmDeleteUser(null)} onConfirm={() => confirmDeleteUser && deleteUser(confirmDeleteUser)} title="Kullanıcıyı sil" message={`${confirmDeleteUser?.email} kullanıcısını silmek istiyor musun?`} confirmLabel="Sil" confirmClass="btn danger" />
@@ -582,16 +691,16 @@ export default function AdminPage() {
   );
 }
 
-function RecipeRow({ recipe, author, onEdit, onApprove, onReject, onDelete, roleOk }: {
+function RecipeRow({ recipe, author, onEdit, onApprove, onReject, onDelete, onPreview, roleOk }: {
   recipe: Recipe; author?: string; onEdit: () => void; onApprove: () => void;
-  onReject: () => void; onDelete: () => void; roleOk: boolean;
+  onReject: () => void; onDelete: () => void; onPreview?: () => void; roleOk: boolean;
 }) {
   const photo = getRecipePhoto(recipe, 220, 220);
   return (
     <article className="bg-white rounded-xl border border-outline-variant/30 flex gap-4 p-4 hover:border-primary/20 transition-colors ambient-shadow">
-      <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+      <button className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={onPreview} title="Önizle">
         <img src={photo} alt={recipe.title} className="w-full h-full object-cover" loading="lazy" />
-      </div>
+      </button>
       <div className="flex-grow min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="font-semibold text-sm text-on-surface truncate">{recipe.title} <span className="text-on-surface-variant font-normal">#{recipe.id}</span></h3>
@@ -606,9 +715,11 @@ function RecipeRow({ recipe, author, onEdit, onApprove, onReject, onDelete, role
           <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-xs">bookmark</span>{recipe.save_count}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Link className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" to={`/recipes/${recipe.id}`} title="Gör">
-            <span className="material-symbols-outlined text-sm">visibility</span>
-          </Link>
+          {onPreview && (
+            <button className="p-1.5 rounded-lg text-primary/70 hover:bg-primary-fixed/30 transition-colors" title="Önizle" onClick={onPreview}>
+              <span className="material-symbols-outlined text-sm">open_in_full</span>
+            </button>
+          )}
           <button className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-30" disabled={!roleOk} title="Düzenle" onClick={onEdit}>
             <span className="material-symbols-outlined text-sm">edit</span>
           </button>
