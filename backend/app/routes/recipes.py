@@ -36,6 +36,7 @@ def _recipe_out(r: Recipe, *, is_favorited: bool = False, is_saved: bool = False
 @router.get("", response_model=dict)
 def list_recipes(
     db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
     approved_only: bool = True,
     skip: int = 0,
     limit: int = 12,
@@ -49,18 +50,143 @@ def list_recipes(
     if q:
         stmt = stmt.where(Recipe.title.ilike(f"%{q}%"))
     if difficulty:
+<<<<<<< Updated upstream
         stmt = stmt.where(Recipe.difficulty == difficulty)
     total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
     items = db.execute(stmt.order_by(desc(Recipe.created_at)).offset(skip).limit(limit)).scalars().all()
+=======
+        conditions.append(Recipe.difficulty == difficulty)
+
+    total = db.execute(
+        select(func.count()).select_from(Recipe).where(*conditions)
+    ).scalar_one()
+
+    try:
+        review_sub = (
+            select(
+                RecipeReview.recipe_id,
+                func.avg(RecipeReview.rating).label("avg_rating"),
+                func.count(RecipeReview.id).label("review_count"),
+            )
+            .group_by(RecipeReview.recipe_id)
+            .subquery()
+        )
+        score_expr = (
+            func.coalesce(Recipe.favorite_count, 0) * 0.40 / 200.0
+            + func.coalesce(Recipe.save_count, 0) * 0.25 / 200.0
+            + func.coalesce(review_sub.c.avg_rating, 0) * 0.25 / 5.0
+            + func.least(func.coalesce(review_sub.c.review_count, 0) * 1.0, 50.0) * 0.10 / 50.0
+        )
+        items = db.execute(
+            select(Recipe)
+            .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
+            .where(*conditions)
+            .order_by(desc(score_expr))
+            .offset(skip)
+            .limit(limit)
+        ).scalars().all()
+    except Exception:
+        db.rollback()
+        items = db.execute(
+            select(Recipe)
+            .where(*conditions)
+            .order_by(desc(Recipe.favorite_count + Recipe.save_count))
+            .offset(skip)
+            .limit(limit)
+        ).scalars().all()
+
+    fav_ids: set[int] = set()
+    saved_ids: set[int] = set()
+    if user and items:
+        recipe_ids = [r.id for r in items]
+        fav_ids = set(db.execute(
+            select(FavoriteRecipe.recipe_id).where(
+                FavoriteRecipe.user_id == user.id,
+                FavoriteRecipe.recipe_id.in_(recipe_ids),
+            )
+        ).scalars().all())
+        saved_ids = set(db.execute(
+            select(SavedRecipe.recipe_id).where(
+                SavedRecipe.user_id == user.id,
+                SavedRecipe.recipe_id.in_(recipe_ids),
+            )
+        ).scalars().all())
+
+>>>>>>> Stashed changes
     return {
-        "items": [_recipe_out(r) for r in items],
+        "items": [_recipe_out(r, is_favorited=r.id in fav_ids, is_saved=r.id in saved_ids) for r in items],
         "total": total,
         "has_more": skip + limit < total,
     }
 
 
 @router.get("/popular", response_model=dict[str, list[RecipeOut]])
+<<<<<<< Updated upstream
 def popular(db: Session = Depends(get_db)) -> dict[str, list[RecipeOut]]:
+=======
+def popular(
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+) -> dict[str, list[RecipeOut]]:
+    try:
+        review_sub = (
+            select(
+                RecipeReview.recipe_id,
+                func.avg(RecipeReview.rating).label("avg_rating"),
+                func.count(RecipeReview.id).label("review_count"),
+            )
+            .group_by(RecipeReview.recipe_id)
+            .subquery()
+        )
+        rows = db.execute(
+            select(Recipe, review_sub.c.avg_rating, review_sub.c.review_count)
+            .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
+            .where(Recipe.is_approved == True)  # noqa: E712
+            .limit(200)
+        ).all()
+        rows = [(r, avg_r, rev_cnt) for r, avg_r, rev_cnt in rows]
+    except Exception:
+        db.rollback()
+        simple = db.execute(
+            select(Recipe).where(Recipe.is_approved == True).limit(200)  # noqa: E712
+        ).scalars().all()
+        rows = [(r, None, None) for r in simple]
+
+    def _score(r: Recipe, avg_r: object, rev_cnt: object) -> float:
+        fav  = min(1.0, (r.favorite_count or 0) / 200.0)
+        sav  = min(1.0, (r.save_count or 0) / 200.0)
+        rat  = float(avg_r or 0) / 5.0
+        rcnt = min(1.0, int(rev_cnt or 0) / 50.0)
+        return fav * 0.40 + sav * 0.25 + rat * 0.25 + rcnt * 0.10
+
+    ranked = sorted(rows, key=lambda t: _score(t[0], t[1], t[2]), reverse=True)[:30]
+
+    fav_ids: set[int] = set()
+    saved_ids: set[int] = set()
+    if user and ranked:
+        recipe_ids = [r.id for r, _, __ in ranked]
+        fav_ids = set(db.execute(
+            select(FavoriteRecipe.recipe_id).where(
+                FavoriteRecipe.user_id == user.id,
+                FavoriteRecipe.recipe_id.in_(recipe_ids),
+            )
+        ).scalars().all())
+        saved_ids = set(db.execute(
+            select(SavedRecipe.recipe_id).where(
+                SavedRecipe.user_id == user.id,
+                SavedRecipe.recipe_id.in_(recipe_ids),
+            )
+        ).scalars().all())
+
+    return {"items": [_recipe_out(r, is_favorited=r.id in fav_ids, is_saved=r.id in saved_ids) for r, _, __ in ranked]}
+
+
+@router.get("/mine", response_model=dict)
+def my_recipes(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> dict:
+>>>>>>> Stashed changes
     items = db.execute(
         select(Recipe)
         .where(Recipe.is_approved == True)  # noqa: E712

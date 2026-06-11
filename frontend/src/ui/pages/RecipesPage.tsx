@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+<<<<<<< Updated upstream
 import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
 import { PageLoader } from "../components/Spinner";
+=======
+import { toast, toastError } from "../components/Toast";
+import { getRecipePhoto } from "../recipePhotos";
+
+type Recipe = {
+  id: number; title: string; description?: string;
+  favorite_count: number; save_count: number; difficulty?: string;
+  cooking_time?: number; serving_count?: number; image_url?: string;
+  is_favorited?: boolean; is_saved?: boolean;
+};
+>>>>>>> Stashed changes
 
 const PAGE_SIZE = 12;
 
@@ -140,3 +152,72 @@ export default function RecipesPage() {
     </div>
   );
 }
+<<<<<<< Updated upstream
+=======
+
+function RecipeTile({ recipe, onRefresh }: { recipe: Recipe; onRefresh: () => void }) {
+  const photo = getRecipePhoto(recipe, 640, 480);
+  const [isFav, setIsFav] = useState(!!recipe.is_favorited);
+  const [isSaved, setIsSaved] = useState(!!recipe.is_saved);
+
+  async function favorite(e: React.MouseEvent) {
+    e.preventDefault();
+    const next = !isFav;
+    setIsFav(next);
+    try {
+      if (!next) { await api("DELETE", `/recipes/${recipe.id}/favorite`); toast("Favorilerden kaldırıldı"); }
+      else { await api("POST", `/recipes/${recipe.id}/favorite`); toast("Favorilere eklendi"); }
+    } catch (error: any) { setIsFav(!next); toastError("Hata", error.message); }
+  }
+
+  async function save(e: React.MouseEvent) {
+    e.preventDefault();
+    const next = !isSaved;
+    setIsSaved(next);
+    try {
+      if (!next) { await api("DELETE", `/recipes/${recipe.id}/save`); toast("Kaydedilenlerden kaldırıldı"); }
+      else { await api("POST", `/recipes/${recipe.id}/save`); toast("Kaydedildi"); }
+    } catch (error: any) { setIsSaved(!next); toastError("Hata", error.message); }
+  }
+
+  return (
+    <article className="recipe-card">
+      <Link to={`/recipes/${recipe.id}`} className="recipe-card-image block">
+        <img src={photo} alt={recipe.title} loading="lazy" />
+        {recipe.difficulty && (
+          <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm">
+            {DIFF_LABEL[recipe.difficulty] || recipe.difficulty}
+          </span>
+        )}
+      </Link>
+      <div className="recipe-card-body">
+        <Link to={`/recipes/${recipe.id}`}>
+          <h3 className="font-semibold text-on-surface leading-snug mb-2 hover:text-primary transition-colors">{recipe.title}</h3>
+        </Link>
+        {recipe.description && (
+          <p className="text-xs text-on-surface-variant mb-2 line-clamp-2">{recipe.description}</p>
+        )}
+        <div className="flex items-center gap-3 text-xs text-on-surface-variant mb-3">
+          {recipe.cooking_time ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">schedule</span>{recipe.cooking_time} dk</span> : null}
+          {recipe.serving_count ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">group</span>{recipe.serving_count} kişi</span> : null}
+        </div>
+        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-outline-variant/20">
+          <button className="flex items-center gap-1 text-xs transition-colors" onClick={favorite}
+            style={{ color: isFav ? "#e53935" : undefined }}>
+            <span className="material-symbols-outlined text-sm transition-colors"
+              style={{ fontVariationSettings: isFav ? "'FILL' 1" : "'FILL' 0", color: isFav ? "#e53935" : undefined }}>favorite</span>
+            {recipe.favorite_count}
+          </button>
+          <button className="flex items-center gap-1 text-xs transition-colors" onClick={save}
+            style={{ color: isSaved ? "#f59e0b" : undefined }}>
+            <span className="material-symbols-outlined text-sm transition-colors"
+              style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0", color: isSaved ? "#f59e0b" : undefined }}>bookmark</span>
+            {recipe.save_count}
+          </button>
+          <Link to={`/recipes/${recipe.id}`} className="ml-auto text-xs font-semibold text-primary hover:underline">Gör</Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+>>>>>>> Stashed changes

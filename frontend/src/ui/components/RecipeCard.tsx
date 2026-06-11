@@ -61,10 +61,11 @@ interface Props {
   onRefresh?: () => void;
   favoriteView?: boolean;
   savedView?: boolean;
+  hideActions?: boolean;
 }
 
 export default function RecipeCard({
-  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh, favoriteView = false, savedView = false,
+  recipe: r, rank, matchScore, matchedIngredients, missingIngredients, style, onRefresh, favoriteView = false, savedView = false, hideActions = false,
 }: Props) {
   async function handleFavorite(e: React.MouseEvent) {
     e.preventDefault();
@@ -163,6 +164,7 @@ export default function RecipeCard({
           </div>
         )}
 
+<<<<<<< Updated upstream
         {matchScore !== undefined && (
           <div className="score-bar-wrap">
             <div className="score-bar-label">
@@ -191,6 +193,51 @@ export default function RecipeCard({
               {savedView ? "×" : "⬇"}
             </button>
             <Link to={`/recipes/${r.id}`} className="btn btn-sm primary">Gör →</Link>
+=======
+        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-outline-variant/20">
+          <button
+            className="flex items-center gap-1 text-xs transition-colors disabled:cursor-default"
+            style={{ color: favoriteView ? "#e53935" : undefined }}
+            onClick={favoriteView ? handleFavorite : undefined}
+            title={favoriteView ? "Favorilerden kaldır" : undefined}
+          >
+            <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: favoriteView ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>{r.favorite_count}
+          </button>
+          <button
+            className="flex items-center gap-1 text-xs transition-colors disabled:cursor-default"
+            style={{ color: savedView ? "#f59e0b" : undefined }}
+            onClick={savedView ? handleSave : undefined}
+            title={savedView ? "Kaydedilenlerden kaldır" : undefined}
+          >
+            <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: savedView ? "'FILL' 1" : "'FILL' 0" }}>bookmark</span>{r.save_count}
+          </button>
+          <div className="ml-auto flex items-center gap-1">
+            {!hideActions && (
+              <>
+                <button
+                  className="p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+                  onClick={handleFavorite}
+                  title={favoriteView ? "Favorilerden kaldır" : "Favorile"}
+                >
+                  <span
+                    className="material-symbols-outlined text-sm transition-colors"
+                    style={{ fontVariationSettings: favoriteView ? "'FILL' 1" : "'FILL' 0", color: favoriteView ? "#e53935" : undefined }}
+                  >favorite</span>
+                </button>
+                <button
+                  className="p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+                  onClick={handleSave}
+                  title={savedView ? "Kaydetmeyi kaldır" : "Kaydet"}
+                >
+                  <span
+                    className="material-symbols-outlined text-sm transition-colors"
+                    style={{ fontVariationSettings: savedView ? "'FILL' 1" : "'FILL' 0", color: savedView ? "#f59e0b" : undefined }}
+                  >bookmark</span>
+                </button>
+              </>
+            )}
+            <Link to={`/recipes/${r.id}`} className="text-xs font-semibold text-primary hover:underline ml-1">Gör</Link>
+>>>>>>> Stashed changes
           </div>
         </div>
       </div>
