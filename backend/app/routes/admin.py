@@ -4,7 +4,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -49,8 +49,17 @@ def _recipe_out(r: Recipe) -> RecipeOut:
 @router.get("/recipes", response_model=dict)
 def recipes(skip: int = 0, limit: int = 100, q: str = "", db: Session = Depends(get_db)) -> dict:
     stmt = select(Recipe)
-    if q:
-        stmt = stmt.where(Recipe.title.ilike(f"%{q}%"))
+    query = q.strip()
+    if query:
+        search = f"%{query}%"
+        clauses = [
+            Recipe.title.ilike(search),
+            Recipe.description.ilike(search),
+            Recipe.instructions.ilike(search),
+        ]
+        if query.isdigit():
+            clauses.append(Recipe.id == int(query))
+        stmt = stmt.where(or_(*clauses))
     total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
     items = db.execute(stmt.order_by(desc(Recipe.created_at)).offset(skip).limit(limit)).scalars().all()
     return {

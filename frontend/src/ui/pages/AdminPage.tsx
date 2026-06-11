@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { ConfirmModal } from "../components/Modal";
@@ -31,6 +31,16 @@ const emptyForm: RecipeForm = {
   category_id: null, image_url: "",
 };
 
+function adminRecipesPath(q: string, skip = 0): string {
+  const params = new URLSearchParams({
+    limit: String(ADMIN_RECIPE_LIMIT),
+    skip: String(skip),
+  });
+  const query = q.trim();
+  if (query) params.set("q", query);
+  return `/admin/recipes?${params.toString()}`;
+}
+
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<Me | null>(null);
@@ -38,6 +48,7 @@ export default function AdminPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeTotal, setRecipeTotal] = useState(0);
   const [recipeHasMore, setRecipeHasMore] = useState(false);
+  const [recipeSearchLoading, setRecipeSearchLoading] = useState(false);
   const [loadingMoreRecipes, setLoadingMoreRecipes] = useState(false);
   const [pending, setPending] = useState<Recipe[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -59,12 +70,29 @@ export default function AdminPage() {
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null);
   const [previewRecipe, setPreviewRecipe] = useState<Recipe | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const recipeSearchRequestRef = useRef(0);
+
+  async function loadRecipes(q = recipeSearch, skip = 0, append = false) {
+    const requestId = ++recipeSearchRequestRef.current;
+    if (skip === 0) setRecipeSearchLoading(Boolean(q.trim()));
+    try {
+      const out = await api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", adminRecipesPath(q, skip));
+      if (requestId !== recipeSearchRequestRef.current) return;
+      setRecipes((current) => (append ? [...current, ...out.items] : out.items));
+      setRecipeTotal(out.total);
+      setRecipeHasMore(out.has_more);
+    } catch (e: any) {
+      if (requestId === recipeSearchRequestRef.current) toastError("Tarifler yüklenemedi", e.message);
+    } finally {
+      if (requestId === recipeSearchRequestRef.current && skip === 0) setRecipeSearchLoading(false);
+    }
+  }
 
   async function refresh() {
     try {
       const [meOut, recipeOut, pendOut, userOut, catOut, ingOut] = await Promise.all([
         api<Me>("GET", "/auth/me"),
-        api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", `/admin/recipes?limit=${ADMIN_RECIPE_LIMIT}`),
+        api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", adminRecipesPath(recipeSearch)),
         api<{ items: Recipe[] }>("GET", "/admin/pending-recipes"),
         api<{ items: User[] }>("GET", "/admin/users"),
         api<{ items: Category[] }>("GET", "/ingredients/categories"),
@@ -86,15 +114,19 @@ export default function AdminPage() {
   }
 
   useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    if (loading) return;
+    const t = window.setTimeout(() => {
+      loadRecipes(recipeSearch);
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [recipeSearch, loading]);
 
   const roleOk = me?.role === "admin";
   const catNameById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const userById = useMemo(() => new Map(users.map((u) => [u.id, u])), [users]);
   const selectedCount = Object.keys(selected).length;
-  const filteredRecipes = useMemo(
-    () => recipes.filter((r) => !recipeSearch || r.title.toLocaleLowerCase("tr-TR").includes(recipeSearch.toLocaleLowerCase("tr-TR"))),
-    [recipes, recipeSearch]
-  );
+  const filteredRecipes = recipes;
   const filteredUsers = users.filter((u) => {
     const q = userSearch.toLocaleLowerCase("tr-TR");
     return !q || u.full_name.toLocaleLowerCase("tr-TR").includes(q) || u.email.toLocaleLowerCase("tr-TR").includes(q);
@@ -164,7 +196,7 @@ export default function AdminPage() {
   async function loadMoreRecipes() {
     setLoadingMoreRecipes(true);
     try {
-      const out = await api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", `/admin/recipes?skip=${recipes.length}&limit=${ADMIN_RECIPE_LIMIT}`);
+      const out = await api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", adminRecipesPath(recipeSearch, recipes.length));
       setRecipes((c) => [...c, ...out.items]);
       setRecipeTotal(out.total); setRecipeHasMore(out.has_more);
     } catch (e: any) { toastError("Tarifler yüklenemedi", e.message); }
@@ -416,7 +448,14 @@ export default function AdminPage() {
             {/* Recipe List */}
             <section className="lg:col-span-7">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-on-surface">Tüm Tarifler</h2>
+                <h2 className="font-bold text-on-surface">
+                  Tüm Tarifler
+                  {recipeSearch.trim() && (
+                    <span className="ml-2 text-xs font-medium text-on-surface-variant">
+                      ({recipeSearchLoading ? "aranıyor..." : `${recipeTotal} sonuç`})
+                    </span>
+                  )}
+                </h2>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
                   <input className="pl-9 pr-4 py-2 bg-white border border-outline-variant/30 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary w-48" placeholder="Tarif ara..." value={recipeSearch} onChange={(e) => setRecipeSearch(e.target.value)} />

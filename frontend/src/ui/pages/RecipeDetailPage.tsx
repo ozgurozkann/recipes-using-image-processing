@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
 import { getToken } from "../authStore";
+import { getRecipePhoto } from "../recipePhotos";
 
 type RecipeIngredient = {
   ingredient_id: number;
@@ -32,22 +33,6 @@ type Review = {
 };
 
 const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
-
-const FOOD_PHOTOS = [
-  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1484723091739-30f299680de?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1400&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1400&h=600&fit=crop",
-];
-
-function getPhotoUrl(id: number, image_url?: string) {
-  if (image_url) return image_url;
-  return FOOD_PHOTOS[id % FOOD_PHOTOS.length];
-}
 
 function splitSteps(text: string): string[] {
   if (!text?.trim()) return [];
@@ -179,10 +164,10 @@ export default function RecipeDetailPage() {
         {/* Hero Image */}
         <div className="relative overflow-hidden rounded-2xl h-[440px] ambient-shadow">
           <img
-            src={getPhotoUrl(item.id, item.image_url)}
+            src={getRecipePhoto(item, 1400, 600)}
             alt={item.title}
             className="w-full h-full object-cover"
-            onError={(e) => { e.currentTarget.src = FOOD_PHOTOS[0]; }}
+            onError={(e) => { e.currentTarget.src = getRecipePhoto({ id: item.id + 1, title: "fallback" }, 1400, 600); }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
