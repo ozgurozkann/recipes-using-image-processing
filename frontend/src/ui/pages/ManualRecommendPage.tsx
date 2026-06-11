@@ -4,6 +4,7 @@ import { api } from "../api";
 import { RecipeCardData } from "../components/RecipeCard";
 import { toastError } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
+import { recordSearchTerm } from "../searchInsights";
 
 type Ingredient = { id: number; name: string; category_id: number | null; unit_type: string };
 type Category = { id: number; name: string };
@@ -45,6 +46,10 @@ export default function ManualRecommendPage() {
 
   const deferredSearch = useDeferredValue(search);
 
+  useEffect(() => {
+    recordSearchTerm(deferredSearch, "ingredient");
+  }, [deferredSearch]);
+
   const byCat = useMemo(() => {
     const map = new Map<number, Ingredient[]>();
     const q = deferredSearch.trim().toLocaleLowerCase("tr-TR");
@@ -81,6 +86,10 @@ export default function ManualRecommendPage() {
   async function recommend() {
     setLoading(true); setVisibleCount(PAGE_SIZE);
     try {
+      Object.keys(selected).forEach((id) => {
+        const name = ingredients.find((item) => item.id === Number(id))?.name;
+        if (name) recordSearchTerm(name, "recommendation");
+      });
       const payload = {
         ingredients: Object.entries(selected).map(([id, v]) => ({ ingredientId: Number(id), quantity: v.quantity, unit: v.unit })),
       };

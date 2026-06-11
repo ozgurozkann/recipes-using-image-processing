@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
+import { recordSearchTerm } from "../searchInsights";
 
 type Recipe = {
   id: number; title: string; description?: string;
@@ -52,6 +53,7 @@ export default function RecipesPage() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
+      recordSearchTerm(q, "recipe");
       skipRef.current = 0;
       fetchPage(0, false);
     }, 300);

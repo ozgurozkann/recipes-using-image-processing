@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..deps import get_current_user
-from ..models import FavoriteRecipe, Recipe, SavedRecipe, User
+from ..models import FavoriteRecipe, Recipe, RecipeReview, SavedRecipe, User
 from ..schemas.auth import UserOut
 from ..schemas.recipes import RecipeOut
 
@@ -77,4 +78,71 @@ def my_saved(db: Session = Depends(get_db), user: User = Depends(get_current_use
         .order_by(Recipe.title.asc())
     ).scalars().all()
     return {"items": [_out(r) for r in recipes]}
+
+
+@router.get("/me/profile-summary", response_model=dict)
+def profile_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
+    week_start = datetime.utcnow() - timedelta(days=7)
+
+    favorites = db.execute(
+        select(func.count()).select_from(FavoriteRecipe).where(FavoriteRecipe.user_id == user.id)
+    ).scalar_one()
+    saved = db.execute(
+        select(func.count()).select_from(SavedRecipe).where(SavedRecipe.user_id == user.id)
+    ).scalar_one()
+    recipes_added = db.execute(
+        select(func.count()).select_from(Recipe).where(Recipe.created_by_user_id == user.id)
+    ).scalar_one()
+    reviews = db.execute(
+        select(func.count()).select_from(RecipeReview).where(RecipeReview.user_id == user.id)
+    ).scalar_one()
+
+    weekly_favorites = db.execute(
+        select(func.count()).select_from(FavoriteRecipe).where(
+            FavoriteRecipe.user_id == user.id,
+            FavoriteRecipe.created_at >= week_start,
+        )
+    ).scalar_one()
+    weekly_saved = db.execute(
+        select(func.count()).select_from(SavedRecipe).where(
+            SavedRecipe.user_id == user.id,
+            SavedRecipe.created_at >= week_start,
+        )
+    ).scalar_one()
+    weekly_recipes_added = db.execute(
+        select(func.count()).select_from(Recipe).where(
+            Recipe.created_by_user_id == user.id,
+            Recipe.created_at >= week_start,
+        )
+    ).scalar_one()
+    weekly_reviews = db.execute(
+        select(func.count()).select_from(RecipeReview).where(
+            RecipeReview.user_id == user.id,
+            RecipeReview.created_at >= week_start,
+        )
+    ).scalar_one()
+
+    weekly_score = min(
+        100,
+        int(
+            weekly_recipes_added * 30
+            + weekly_reviews * 15
+            + weekly_favorites * 10
+            + weekly_saved * 8
+        ),
+    )
+
+    return {
+        "favorites": favorites,
+        "saved": saved,
+        "recipes_added": recipes_added,
+        "reviews": reviews,
+        "weekly": {
+            "favorites": weekly_favorites,
+            "saved": weekly_saved,
+            "recipes_added": weekly_recipes_added,
+            "reviews": weekly_reviews,
+            "score": weekly_score,
+        },
+    }
 

@@ -2,9 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { logout } from "../authStore";
+import { getRecentSearchTerms } from "../searchInsights";
 
 type Me = { id: number; full_name: string; email: string; role: string; avatar_url?: string | null };
-type Stats = { favorites: number; saved: number };
+type Stats = {
+  favorites: number;
+  saved: number;
+  recipes_added: number;
+  reviews: number;
+  weekly: {
+    favorites: number;
+    saved: number;
+    recipes_added: number;
+    reviews: number;
+    score: number;
+  };
+};
 
 const TASTE_PROFILES = [
   { icon: "restaurant", label: "Umami", level: "Yüksek", color: "text-secondary-container border-secondary-container/30" },
@@ -24,12 +37,11 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([
       api<Me>("GET", "/auth/me"),
-      api<{ items: unknown[] }>("GET", "/users/me/favorites"),
-      api<{ items: unknown[] }>("GET", "/users/me/saved"),
+      api<Stats>("GET", "/users/me/profile-summary"),
     ])
-      .then(([m, fav, sav]) => {
+      .then(([m, summary]) => {
         setMe(m);
-        setStats({ favorites: fav.items.length, saved: sav.items.length });
+        setStats(summary);
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
@@ -69,9 +81,55 @@ export default function ProfilePage() {
     ? me.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : me.email[0].toUpperCase();
 
-  const nutrientScore = 82;
+  const recentSearches = getRecentSearchTerms();
+  const primarySearch = recentSearches[0]?.term;
+  const secondarySearch = recentSearches[1]?.term;
+  const activityScore = stats?.weekly.score ?? 0;
+  const nutrientScore = activityScore;
   const nutrientDash = 440;
   const nutrientOffset = nutrientDash - (nutrientDash * nutrientScore) / 100;
+  const activityRows = [
+    { label: "Tarif ekleme", count: stats?.weekly.recipes_added ?? 0, points: 30, color: "bg-primary" },
+    { label: "Yorum yapma", count: stats?.weekly.reviews ?? 0, points: 15, color: "bg-secondary-container" },
+    { label: "Beğeni", count: stats?.weekly.favorites ?? 0, points: 10, color: "bg-primary-fixed" },
+    { label: "Kaydetme", count: stats?.weekly.saved ?? 0, points: 8, color: "bg-secondary" },
+  ];
+  const insights = [
+    primarySearch
+      ? {
+          icon: "search",
+          iconColor: "text-primary bg-primary/10",
+          title: `"${primarySearch}" aramaları öne çıkıyor`,
+          desc: secondarySearch
+            ? `Son aramalarınızda "${primarySearch}" ve "${secondarySearch}" dikkat çekiyor. Önerilerde bu temaya yakın tarifleri takip edebilirsiniz.`
+            : `Son aramanız "${primarySearch}". Benzer malzemelerle öneri alırsanız daha isabetli sonuçlar çıkar.`,
+        }
+      : {
+          icon: "travel_explore",
+          iconColor: "text-primary bg-primary/10",
+          title: "Arama alışkanlığı henüz oluşmadı",
+          desc: "Tarif veya malzeme aradıkça bu alan ilgi alanlarınıza göre şekillenecek.",
+        },
+    (stats?.saved ?? 0) >= (stats?.favorites ?? 0)
+      ? {
+          icon: "bookmark",
+          iconColor: "text-secondary bg-secondary/10",
+          title: "Kaydetme eğiliminiz güçlü",
+          desc: `${stats?.saved ?? 0} tarif kaydettiniz. Kaydettiklerinizi haftalık menü planı gibi kullanabilirsiniz.`,
+        }
+      : {
+          icon: "favorite",
+          iconColor: "text-secondary bg-secondary/10",
+          title: "Beğendiğiniz tarifler profilinizi belirliyor",
+          desc: `${stats?.favorites ?? 0} favori tarifiniz var. Benzer lezzetlerde yeni tarif keşfi için iyi bir sinyal oluştu.`,
+        },
+    {
+      icon: "trending_up",
+      iconColor: "text-primary bg-primary/10",
+      title: activityScore >= 70 ? "Bu hafta etkileşim yoğun" : "Bu hafta aktivite alanı açık",
+      desc: `Haftalık puanınız ${activityScore}. Tarif ekleme, yorum, beğeni ve kaydetme yaptıkça bu skor yükselir.`,
+    },
+  ];
 
   return (
     <div className="pb-20">
@@ -174,23 +232,6 @@ export default function ProfilePage() {
               ))}
             </div>
 
-            {/* Goals */}
-            <div className="glass-card p-6 rounded-[32px] ambient-shadow">
-              <h3 className="font-bold text-primary text-headline-md mb-4">Hedefler</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { icon: "bolt", label: "ENERJİ OPTİMİZASYONU", color: "bg-primary/10 text-primary" },
-                  { icon: "spa", label: "ANTI-İNFLAMATUAR", color: "bg-primary/10 text-primary" },
-                  { icon: "psychology", label: "NÖRO-KORUMA", color: "bg-secondary/10 text-secondary" },
-                ].map((g) => (
-                  <div key={g.label} className={`${g.color} px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1`}>
-                    <span className="material-symbols-outlined text-xs">{g.icon}</span>
-                    {g.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Quick Links */}
             <div className="glass-card p-6 rounded-[32px] ambient-shadow">
               <h3 className="font-bold text-sm mb-4 text-on-surface">Hızlı Erişim</h3>
@@ -249,9 +290,9 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nutrient Gauge */}
+              {/* Activity Gauge */}
               <div className="glass-card p-8 rounded-[32px] flex flex-col items-center text-center ambient-shadow">
-                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">Haftalık Besin Yoğunluğu</h3>
+                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">Haftalık Aktivite Puanı</h3>
                 <div className="relative w-40 h-40 mb-4">
                   <svg className="w-full h-full" viewBox="0 0 160 160">
                     <circle className="text-surface-container-high" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" strokeWidth="8" />
@@ -270,28 +311,24 @@ export default function ProfilePage() {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-4xl font-black text-primary">{nutrientScore}</span>
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">A- PUAN</span>
+                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">PUAN</span>
                   </div>
                 </div>
-                <p className="text-sm text-on-surface-variant px-4">Lif ve demir hedeflerinize bu hafta 6 gün ulaştınız.</p>
+                <p className="text-sm text-on-surface-variant px-4">Tarif ekleme, yorum, beğeni ve kaydetme hareketlerine göre hesaplanır.</p>
               </div>
 
-              {/* Macro Bars */}
+              {/* Activity Bars */}
               <div className="glass-card p-8 rounded-[32px] ambient-shadow">
-                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">AI Optimize Makrolar</h3>
+                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">Puan Dağılımı</h3>
                 <div className="space-y-5">
-                  {[
-                    { label: "Protein", current: 140, goal: 160, color: "bg-primary", pct: 87.5 },
-                    { label: "Sağlıklı Yağlar", current: 65, goal: 70, color: "bg-secondary-container", pct: 92 },
-                    { label: "Karbonhidrat", current: 210, goal: 250, color: "bg-primary-fixed", pct: 84 },
-                  ].map((m) => (
+                  {activityRows.map((m) => (
                     <div key={m.label}>
                       <div className="flex justify-between mb-1.5">
                         <span className="text-sm font-semibold text-on-surface">{m.label}</span>
-                        <span className="text-sm text-on-surface-variant">{m.current}g / {m.goal}g</span>
+                        <span className="text-sm text-on-surface-variant">{m.count} kez · +{m.points} puan</span>
                       </div>
                       <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
-                        <div className={`h-full ${m.color} rounded-full transition-all duration-700`} style={{ width: `${m.pct}%` }} />
+                        <div className={`h-full ${m.color} rounded-full transition-all duration-700`} style={{ width: `${Math.min(100, m.count * m.points)}%` }} />
                       </div>
                     </div>
                   ))}
@@ -305,10 +342,7 @@ export default function ProfilePage() {
                 <h3 className="font-bold text-headline-md text-primary">Akıllı İçgörüler</h3>
               </div>
               <div className="divide-y divide-outline-variant/20">
-                {[
-                  { icon: "biotech", iconColor: "text-primary bg-primary/10", title: "Magnezyum optimizasyonu tespit edildi", desc: "Kahvaltı rutininize kabak çekirdeği ekledikten sonra uyku düzeniniz iyileşti. 7 gün daha sürdürün." },
-                  { icon: "trending_up", iconColor: "text-secondary bg-secondary/10", title: "Metabolik esneklik zirvesi", desc: "Vücudunuz yakıt kaynakları arasında verimli geçiş yapıyor. Aralıklı oruç penceresi: bugün 20:00-12:00 önerilir." },
-                ].map((ins) => (
+                {insights.map((ins) => (
                   <div key={ins.title} className="p-6 flex gap-4 items-start hover:bg-primary/5 transition-colors cursor-pointer">
                     <div className={`p-3 rounded-2xl flex-shrink-0 ${ins.iconColor}`}>
                       <span className="material-symbols-outlined">{ins.icon}</span>
