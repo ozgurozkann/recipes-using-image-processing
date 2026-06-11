@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ManualRecommendPage from "./pages/ManualRecommendPage";
 import ImageRecommendPage from "./pages/ImageRecommendPage";
+import CombinedRecommendPage from "./pages/CombinedRecommendPage";
 import RecipesPage from "./pages/RecipesPage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
 import FavoritesPage from "./pages/FavoritesPage";
@@ -16,6 +17,8 @@ import SavedPage from "./pages/SavedPage";
 import ProfilePage from "./pages/ProfilePage";
 import PopularRecipesPage from "./pages/PopularRecipesPage";
 import AddRecipePage from "./pages/AddRecipePage";
+import MyRecipesPage from "./pages/MyRecipesPage";
+import EditRecipePage from "./pages/EditRecipePage";
 import AdminPage from "./pages/AdminPage";
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
@@ -65,8 +68,8 @@ export default function App() {
               <nav className="topnav-links hidden md:flex">
                 <NavLink to="/recipes">Tarifler</NavLink>
                 <NavLink to="/recipes/popular">Popüler</NavLink>
-                <NavLink to="/recommend/image">Fotoğraf</NavLink>
-                <NavLink to="/recommend/manual">Manuel</NavLink>
+                <NavLink to="/recommend">Öneri</NavLink>
+                {token && <NavLink to="/my-recipes">Tariflerim</NavLink>}
                 {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
                 {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
               </nav>
@@ -114,8 +117,7 @@ export default function App() {
           <nav className="flex md:hidden gap-4 px-5 pb-3 overflow-x-auto scrollbar-hide" style={{ borderTop: "1px solid rgba(28,27,27,0.05)" }}>
             <NavLink to="/recipes">Tarifler</NavLink>
             <NavLink to="/recipes/popular">Popüler</NavLink>
-            <NavLink to="/recommend/image">Fotoğraf</NavLink>
-            <NavLink to="/recommend/manual">Manuel</NavLink>
+            <NavLink to="/recommend">Öneri</NavLink>
             {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
             {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
           </nav>
@@ -131,10 +133,13 @@ export default function App() {
           <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/recipes/popular" element={<PopularRecipesPage />} />
-          <Route path="/recipes/:id" element={<RecipeDetailPage />} />
           <Route path="/recipes/add" element={<RequireAuth><AddRecipePage /></RequireAuth>} />
+          <Route path="/recipes/edit/:id" element={<RequireAuth><EditRecipePage /></RequireAuth>} />
+          <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+          <Route path="/my-recipes" element={<RequireAuth><MyRecipesPage /></RequireAuth>} />
           <Route path="/favorites" element={<RequireAuth><FavoritesPage /></RequireAuth>} />
           <Route path="/saved" element={<RequireAuth><SavedPage /></RequireAuth>} />
+          <Route path="/recommend" element={<CombinedRecommendPage />} />
           <Route path="/recommend/manual" element={<ManualRecommendPage />} />
           <Route path="/recommend/image" element={<RequireAuth><ImageRecommendPage /></RequireAuth>} />
           <Route path="/admin" element={<RequireAuth><AdminPage /></RequireAuth>} />

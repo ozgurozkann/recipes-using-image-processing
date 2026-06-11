@@ -5,12 +5,12 @@ import json
 import time
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user
+from ..deps import get_current_user, get_optional_user
 from ..ml.image_recognition_service import DetectedIngredient, ImageRecognitionService
 from ..models import Ingredient, User, UserUploadedImage
 from ..schemas.recommendations import (
@@ -130,4 +130,39 @@ async def by_images(
     ingredient_ids = [i.id for i in matched_ingredients]
 
     results = recommend_by_ingredient_ids(db, ingredient_ids, limit=30, require_all_inputs=True)
+    return ImageRecommendOut(items=_recommend_items(results), detectedIngredients=detected)
+
+
+@router.post("/combined", response_model=ImageRecommendOut)
+async def combined(
+    files: list[UploadFile] = File(default=[]),
+    ingredient_ids: str = Form(default="[]"),
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+) -> ImageRecommendOut:
+    image_files = [f for f in files if f.content_type and f.content_type.startswith("image/")]
+
+    try:
+        manual_ids: list[int] = json.loads(ingredient_ids)
+    except (json.JSONDecodeError, ValueError):
+        manual_ids = []
+
+    all_ids: list[int] = list(manual_ids)
+    detected: list[DetectedIngredientOut] = []
+
+    if image_files:
+        if user is None:
+            raise HTTPException(status_code=401, detail="Fotoğraf yüklemek için giriş yapmanız gerekiyor")
+        service = ImageRecognitionService()
+        detected = await _save_and_detect(image_files, user, db, service)
+        detected_names = [d.name for d in detected]
+        matched = db.execute(select(Ingredient).where(Ingredient.name.in_(detected_names))).scalars().all()
+        all_ids.extend(i.id for i in matched)
+
+    all_ids = list(set(all_ids))
+
+    if not all_ids:
+        return ImageRecommendOut(items=[], detectedIngredients=detected)
+
+    results = recommend_by_ingredient_ids(db, all_ids, limit=30)
     return ImageRecommendOut(items=_recommend_items(results), detectedIngredients=detected)

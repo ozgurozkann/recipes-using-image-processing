@@ -63,16 +63,52 @@ def list_recipes(
     q: str = "",
     difficulty: str = "",
 ) -> dict:
-    from sqlalchemy import func
-    stmt = select(Recipe)
+    conditions = []
     if approved_only:
-        stmt = stmt.where(Recipe.is_approved == True)  # noqa: E712
+        conditions.append(Recipe.is_approved == True)  # noqa: E712
     if q:
-        stmt = stmt.where(Recipe.title.ilike(f"%{q}%"))
+        conditions.append(Recipe.title.ilike(f"%{q}%"))
     if difficulty:
-        stmt = stmt.where(Recipe.difficulty == difficulty)
-    total = db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one()
-    items = db.execute(stmt.order_by(desc(Recipe.created_at)).offset(skip).limit(limit)).scalars().all()
+        conditions.append(Recipe.difficulty == difficulty)
+
+    total = db.execute(
+        select(func.count()).select_from(Recipe).where(*conditions)
+    ).scalar_one()
+
+    try:
+        review_sub = (
+            select(
+                RecipeReview.recipe_id,
+                func.avg(RecipeReview.rating).label("avg_rating"),
+                func.count(RecipeReview.id).label("review_count"),
+            )
+            .group_by(RecipeReview.recipe_id)
+            .subquery()
+        )
+        score_expr = (
+            func.coalesce(Recipe.favorite_count, 0) * 0.40 / 200.0
+            + func.coalesce(Recipe.save_count, 0) * 0.25 / 200.0
+            + func.coalesce(review_sub.c.avg_rating, 0) * 0.25 / 5.0
+            + func.least(func.coalesce(review_sub.c.review_count, 0) * 1.0, 50.0) * 0.10 / 50.0
+        )
+        items = db.execute(
+            select(Recipe)
+            .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
+            .where(*conditions)
+            .order_by(desc(score_expr))
+            .offset(skip)
+            .limit(limit)
+        ).scalars().all()
+    except Exception:
+        db.rollback()
+        items = db.execute(
+            select(Recipe)
+            .where(*conditions)
+            .order_by(desc(Recipe.favorite_count + Recipe.save_count))
+            .offset(skip)
+            .limit(limit)
+        ).scalars().all()
+
     return {
         "items": [_recipe_out(r) for r in items],
         "total": total,
@@ -116,6 +152,19 @@ def popular(db: Session = Depends(get_db)) -> dict[str, list[RecipeOut]]:
 
     ranked = sorted(rows, key=lambda t: _score(t[0], t[1], t[2]), reverse=True)[:30]
     return {"items": [_recipe_out(r) for r, _, __ in ranked]}
+
+
+@router.get("/mine", response_model=dict)
+def my_recipes(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> dict:
+    items = db.execute(
+        select(Recipe)
+        .where(Recipe.created_by_user_id == user.id)
+        .order_by(desc(Recipe.id))
+    ).scalars().all()
+    return {"items": [_recipe_out(r) for r in items]}
 
 
 @router.get("/{recipe_id}", response_model=RecipeOut)
