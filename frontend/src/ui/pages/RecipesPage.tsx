@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-<<<<<<< Updated upstream
-import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
-import { PageLoader } from "../components/Spinner";
-=======
 import { toast, toastError } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
 
@@ -13,10 +10,8 @@ type Recipe = {
   cooking_time?: number; serving_count?: number; image_url?: string;
   is_favorited?: boolean; is_saved?: boolean;
 };
->>>>>>> Stashed changes
 
 const PAGE_SIZE = 12;
-
 const DIFFICULTY_OPTIONS = [
   { value: "", label: "Tüm Zorluklar" },
   { value: "easy", label: "Kolay" },
@@ -24,8 +19,10 @@ const DIFFICULTY_OPTIONS = [
   { value: "hard", label: "Zor" },
 ];
 
+const DIFF_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
+
 export default function RecipesPage() {
-  const [items, setItems] = useState<RecipeCardData[]>([]);
+  const [items, setItems] = useState<Recipe[]>([]);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -44,7 +41,7 @@ export default function RecipesPage() {
     const setter = append ? setLoadingMore : setLoading;
     setter(true);
 
-    api<{ items: RecipeCardData[]; total: number; has_more: boolean }>(
+    api<{ items: Recipe[]; total: number; has_more: boolean }>(
       "GET",
       `/recipes?${params}`
     )
@@ -58,7 +55,6 @@ export default function RecipesPage() {
       .finally(() => setter(false));
   }
 
-  // İlk yükleme & filtre değişiminde sıfırdan başla
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -68,92 +64,85 @@ export default function RecipesPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [q, difficulty]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function loadMore() {
-    fetchPage(skipRef.current, true);
-  }
-
-  function reload() {
-    skipRef.current = 0;
-    fetchPage(0, false);
-  }
+  function loadMore() { fetchPage(skipRef.current, true); }
+  function reload() { skipRef.current = 0; fetchPage(0, false); }
 
   return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">Tüm <span>Tarifler</span></h1>
-        <p className="page-sub">Keşfet, favoriyle, pişir.</p>
-      </div>
+    <div className="pb-20">
+      <main className="pt-8 max-w-7xl mx-auto px-5 md:px-16">
+        <section className="mb-8">
+          <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">Mutfak Koleksiyonu</span>
+          <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight mb-3">
+            Bugünün lezzet listesini keşfet.
+          </h1>
+          <p className="text-on-surface-variant text-body-lg">Arama, zorluk filtresi ve hızlı aksiyonlarla tarifleri rahatça tara.</p>
+        </section>
 
-      {/* Filters */}
-      <div className="card card-flat" style={{ padding: "14px 18px", marginBottom: 4 }}>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ position: "relative", flex: "1 1 240px" }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none" }}>🔍</span>
+        <div className="glass-card rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1" style={{ minWidth: 200 }}>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
             <input
-              className="input"
-              placeholder="Tarif ara…"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary text-sm placeholder:text-outline outline-none"
+              placeholder="Tarif ara..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              style={{ paddingLeft: 38 }}
             />
           </div>
           <select
-            className="input"
+            className="px-4 py-2.5 bg-white border border-outline-variant rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary"
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
-            style={{ flex: "0 1 160px" }}
           >
             {DIFFICULTY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <div className="badge" style={{ whiteSpace: "nowrap" }}>
-            {total} tarif
-          </div>
+          <span className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-full">{total} tarif</span>
         </div>
-      </div>
 
-      {err && <div className="error" style={{ marginTop: 12 }}>{err}</div>}
+        {err && <div className="mb-4 px-4 py-3 bg-error-container text-on-error-container rounded-xl text-sm">{err}</div>}
 
-      {loading ? (
-        <PageLoader />
-      ) : items.length === 0 ? (
-        <div className="empty card" style={{ marginTop: 16 }}>
-          <div className="empty-icon">🍽️</div>
-          <div className="empty-title">Tarif bulunamadı</div>
-          <div className="empty-sub">Farklı bir arama deneyin.</div>
-        </div>
-      ) : (
-        <>
-          <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", margin: "16px 0 0" }}>
-            {items.map((r) => (
-              <RecipeCard key={r.id} recipe={r} onRefresh={reload} />
-            ))}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <span className="spinner spinner-primary" style={{ width: 36, height: 36 }} />
           </div>
-
-          {hasMore && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 24, marginBottom: 8 }}>
-              <button
-                className="btn btn-secondary"
-                onClick={loadMore}
-                disabled={loadingMore}
-                style={{ minWidth: 180 }}
-              >
-                {loadingMore ? "Yükleniyor…" : "Daha Fazla Göster"}
-              </button>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-20">
+            <span className="material-symbols-outlined text-4xl text-outline">no_meals</span>
+            <p className="text-on-surface-variant">Tarif bulunamadı. Farklı bir arama deneyin.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {items.map((r) => <RecipeTile key={r.id} recipe={r} onRefresh={reload} />)}
             </div>
-          )}
 
-          {!hasMore && items.length > 0 && (
-            <p style={{ textAlign: "center", color: "var(--text-muted)", marginTop: 24, fontSize: 14 }}>
-              Tüm {total} tarif gösterildi.
-            </p>
-          )}
-        </>
-      )}
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <button
+                  className="flex items-center gap-2 text-primary font-semibold hover:underline disabled:opacity-50"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <><span className="spinner" /> Yükleniyor…</> : <>Daha Fazla Göster <span className="material-symbols-outlined">expand_more</span></>}
+                </button>
+              </div>
+            )}
+
+            {!hasMore && items.length > 0 && (
+              <p className="text-center text-on-surface-variant mt-8 text-sm">Tüm {total} tarif gösterildi.</p>
+            )}
+          </>
+        )}
+      </main>
+
+      <footer className="culina-footer mt-12">
+        <div className="culina-footer-inner">
+          <span className="font-bold text-primary">Recipe AI</span>
+          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI. Seçkin Mutfak Vizyoneri.</p>
+        </div>
+      </footer>
     </div>
   );
 }
-<<<<<<< Updated upstream
-=======
 
 function RecipeTile({ recipe, onRefresh }: { recipe: Recipe; onRefresh: () => void }) {
   const photo = getRecipePhoto(recipe, 640, 480);
@@ -220,4 +209,3 @@ function RecipeTile({ recipe, onRefresh }: { recipe: Recipe; onRefresh: () => vo
     </article>
   );
 }
->>>>>>> Stashed changes

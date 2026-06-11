@@ -100,17 +100,9 @@ export default function RecipeDetailPage() {
     const next = !favorited;
     setFavorited(next);
     try {
-<<<<<<< Updated upstream
-      const res = await api<{ favorited: boolean }>(favorited ? "DELETE" : "POST", `/recipes/${id}/favorite`);
-      setFavorited(res.favorited);
-      toast(res.favorited ? "Favorilere eklendi ♡" : "Favorilerden çıkarıldı");
-      load();
-    } catch (e: any) { toastError("Hata", e.message); }
-=======
       await api(next ? "POST" : "DELETE", `/recipes/${id}/favorite`);
       toast(next ? "Favorilere eklendi" : "Favorilerden çıkarıldı");
     } catch (e: any) { setFavorited(!next); toastError("Hata", e.message); }
->>>>>>> Stashed changes
   }
 
   async function toggleSave() {
@@ -118,17 +110,9 @@ export default function RecipeDetailPage() {
     const next = !saved;
     setSaved(next);
     try {
-<<<<<<< Updated upstream
-      const res = await api<{ saved: boolean }>(saved ? "DELETE" : "POST", `/recipes/${id}/save`);
-      setSaved(res.saved);
-      toast(res.saved ? "Tarif kaydedildi ⬇" : "Kayıt kaldırıldı");
-      load();
-    } catch (e: any) { toastError("Hata", e.message); }
-=======
       await api(next ? "POST" : "DELETE", `/recipes/${id}/save`);
       toast(next ? "Tarif kaydedildi" : "Kayıt kaldırıldı");
     } catch (e: any) { setSaved(!next); toastError("Hata", e.message); }
->>>>>>> Stashed changes
   }
 
   if (loading) return <PageLoader />;
@@ -176,46 +160,7 @@ export default function RecipeDetailPage() {
                 <span className="photo-badge photo-badge-white">👥 {item.serving_count} kişi</span>
               )}
             </div>
-<<<<<<< Updated upstream
             <h1 style={{ fontSize: "clamp(22px,4vw,34px)", fontWeight: 900, margin: 0, letterSpacing: "-0.5px", color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>{item.title}</h1>
-=======
-
-            <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-white mb-4">{item.title}</h1>
-
-            {/* Actions */}
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={toggleFavorite}
-                className="flex items-center gap-2 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-lg"
-                style={{
-                  background: favorited ? "#e53935" : "rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(10px)",
-                  color: "white",
-                }}
-              >
-                <span className="material-symbols-outlined text-sm"
-                  style={{ fontVariationSettings: favorited ? "'FILL' 1" : "'FILL' 0" }}>
-                  favorite
-                </span>
-                {favorited ? "FAVORİLENDİ" : "FAVORİLE"}
-              </button>
-              <button
-                onClick={toggleSave}
-                className="flex items-center gap-2 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
-                style={{
-                  background: saved ? "#f59e0b" : "rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(10px)",
-                  color: "white",
-                }}
-              >
-                <span className="material-symbols-outlined text-sm"
-                  style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}>
-                  bookmark
-                </span>
-                {saved ? "KAYDEDİLDİ" : "KAYDET"}
-              </button>
-            </div>
->>>>>>> Stashed changes
           </div>
         </div>
 

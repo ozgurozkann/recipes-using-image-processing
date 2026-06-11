@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
-import { PageLoader } from "../components/Spinner";
 
 export default function FavoritesPage() {
   const [items, setItems] = useState<RecipeCardData[]>([]);
@@ -20,24 +19,22 @@ export default function FavoritesPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">♡ <span>Favorilerim</span></h1>
-        <p className="page-sub">Beğenip favorilediğin tarifler burada.</p>
-      </div>
+    <div className="pb-20">
+      <main className="pt-8 max-w-7xl mx-auto px-5 md:px-16">
+        <section className="mb-8">
+          <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">Koleksiyonum</span>
+          <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight mb-3">
+            Favorilerim
+          </h1>
+          <p className="text-on-surface-variant text-body-lg">Beğenip favorilediğin tarifler burada.</p>
+        </section>
 
-      {err && <div className="error">{err}</div>}
+        {err && (
+          <div className="mb-6 px-4 py-3 bg-error-container text-on-error-container rounded-xl text-sm font-medium flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">error</span>{err}
+          </div>
+        )}
 
-<<<<<<< Updated upstream
-      {loading ? (
-        <PageLoader />
-      ) : items.length === 0 ? (
-        <div className="empty card">
-          <div className="empty-icon" style={{ animation: "float 3s ease-in-out infinite" }}>♡</div>
-          <div className="empty-title">Henüz favori tarif yok</div>
-          <div className="empty-sub">Tarifleri keşfedip favorile!</div>
-          <Link to="/recipes" className="btn primary" style={{ marginTop: 16 }}>Tariflere Gözat</Link>
-=======
         {loading ? (
           <div className="flex justify-center py-20">
             <span className="spinner spinner-primary" style={{ width: 36, height: 36 }} />
@@ -69,18 +66,8 @@ export default function FavoritesPage() {
         <div className="culina-footer-inner">
           <span className="font-bold text-primary">Recipe AI</span>
           <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI.</p>
->>>>>>> Stashed changes
         </div>
-      ) : (
-        <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <span className="badge primary">{items.length} favori tarif</span>
-          </div>
-          <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 8 }}>
-            {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} favoriteView />)}
-          </div>
-        </>
-      )}
+      </footer>
     </div>
   );
 }

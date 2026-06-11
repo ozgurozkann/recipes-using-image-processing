@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-<<<<<<< Updated upstream
-import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
-import { PageLoader } from "../components/Spinner";
-=======
 import { toast, toastError } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
 
@@ -20,16 +17,16 @@ function formatCount(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`;
   return String(value);
 }
->>>>>>> Stashed changes
 
 export default function PopularRecipesPage() {
-  const [items, setItems] = useState<RecipeCardData[]>([]);
+  const [items, setItems] = useState<PopularRecipe[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "quick">("all");
 
   function load() {
-    setLoading(true);
-    api<{ items: RecipeCardData[] }>("GET", "/recipes/popular")
+    setLoading(true); setErr(null);
+    api<{ items: PopularRecipe[] }>("GET", "/recipes/popular")
       .then((d) => setItems(d.items))
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
@@ -37,39 +34,36 @@ export default function PopularRecipesPage() {
 
   useEffect(() => { load(); }, []);
 
-  return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">⭐ En <span>Popüler</span> Tarifler</h1>
-        <p className="page-sub">Favori ve kaydetme sayısına göre sıralanmış en sevilen tarifler.</p>
-      </div>
+  const podium = useMemo(() => {
+    if (items.length < 3) return [];
+    return [
+      { recipe: items[1], rank: 2 as const },
+      { recipe: items[0], rank: 1 as const },
+      { recipe: items[2], rank: 3 as const },
+    ];
+  }, [items]);
 
-      {/* Top 3 podium */}
-      {!loading && items.length >= 3 && (
-        <div className="card" style={{ padding: "28px 24px", marginBottom: 8, animation: "fadeUp 0.4s ease both" }}>
-          <div className="section-title">🏆 Podyum</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: 16, alignItems: "end" }}>
-            {[items[1], items[0], items[2]].map((r, pos) => {
-              const actualRank = pos === 0 ? 2 : pos === 1 ? 1 : 3;
-              const heights = ["180px", "220px", "160px"];
-              return (
-                <div key={r.id} style={{ textAlign: "center", animation: `fadeUp 0.4s ${pos * 0.1}s ease both` }}>
-                  <div style={{ height: heights[pos], background: "var(--panel2)", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius) var(--radius) 0 0", display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: 32, position: "relative" }}>
-                    <span className={`rank-badge rank-${actualRank}`} style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)" }}>
-                      {actualRank}
-                    </span>
-                    {["🍜", "🍲", "🥘", "🫕", "🥗", "🍳", "🥙", "🍱"][r.id % 8]}
-                  </div>
-                  <div style={{ padding: "10px 6px 0", fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>{r.title}</div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>♡ {r.favorite_count}</div>
-                </div>
-              );
-            })}
+  const visibleItems = useMemo(() => (
+    filter === "quick" ? items.filter((i) => (i.cooking_time || 0) <= 30) : items
+  ), [filter, items]);
+
+  if (loading) return (
+    <div className="page-loader">
+      <span className="spinner spinner-primary" style={{ width: 36, height: 36 }} />
+    </div>
+  );
+
+  return (
+    <div className="pb-20">
+      <main className="pt-8 max-w-7xl mx-auto px-5 md:px-16">
+
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="material-symbols-outlined text-secondary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+            <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight">
+              En Popüler Tarifler
+            </h1>
           </div>
-<<<<<<< Updated upstream
-=======
           <p className="text-on-surface-variant text-body-lg max-w-2xl">
             Favori ve kaydetme sayısına göre sıralanmış, topluluğumuzun en çok sevdiği seçkin lezzetler.
           </p>
@@ -79,7 +73,6 @@ export default function PopularRecipesPage() {
           <div className="mb-6 px-4 py-3 bg-error-container text-on-error-container rounded-xl text-sm font-medium">{err}</div>
         )}
 
-        {/* Podium */}
         {podium.length > 0 && (
           <section className="mb-16">
             <div className="flex items-center gap-2 mb-6">
@@ -94,7 +87,6 @@ export default function PopularRecipesPage() {
           </section>
         )}
 
-        {/* List */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-on-surface">Tüm Popüler Tarifler</h2>
@@ -129,26 +121,11 @@ export default function PopularRecipesPage() {
         <div className="culina-footer-inner">
           <span className="font-bold text-primary">Recipe AI</span>
           <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI.</p>
->>>>>>> Stashed changes
         </div>
-      )}
-
-      {err && <div className="error">{err}</div>}
-
-      {loading ? (
-        <PageLoader />
-      ) : (
-        <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", marginTop: 16 }}>
-          {items.map((r, i) => (
-            <RecipeCard key={r.id} recipe={r} rank={i + 1} onRefresh={load} />
-          ))}
-        </div>
-      )}
+      </footer>
     </div>
   );
 }
-<<<<<<< Updated upstream
-=======
 
 function PodiumCard({ recipe, rank }: { recipe: PopularRecipe; rank: 1 | 2 | 3 }) {
   const photo = getRecipePhoto(recipe, 800, 600);
@@ -156,7 +133,7 @@ function PodiumCard({ recipe, rank }: { recipe: PopularRecipe; rank: 1 | 2 | 3 }
   return (
     <Link
       to={`/recipes/${recipe.id}`}
-      className={`block relative rounded-2xl overflow-hidden group ${isWinner ? "h-64 row-span-1" : "h-48"} ambient-shadow`}
+      className={`block relative rounded-2xl overflow-hidden group ${isWinner ? "h-64" : "h-48"} ambient-shadow`}
     >
       <img src={photo} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -243,4 +220,3 @@ function PopularCard({ recipe, rank }: { recipe: PopularRecipe; rank: number }) 
     </article>
   );
 }
->>>>>>> Stashed changes
