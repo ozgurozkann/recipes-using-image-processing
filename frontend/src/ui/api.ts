@@ -1,7 +1,7 @@
 import { clearToken, getToken } from "./authStore";
 
 export async function api<T>(method: string, path: string, body?: unknown, isForm?: boolean): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { Accept: "application/json" };
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (body && !isForm) headers["Content-Type"] = "application/json";

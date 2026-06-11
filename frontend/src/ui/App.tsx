@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { api } from "./api";
 import { getToken, logout } from "./authStore";
@@ -28,7 +28,10 @@ function getInitialTheme(): "dark" | "light" {
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const isActive = pathname === to || (to !== "/" && pathname.startsWith(to));
+  const isActive =
+    to === "/recipes"
+      ? pathname === "/recipes" || /^\/recipes\/\d+/.test(pathname)
+      : pathname === to || (to !== "/" && pathname.startsWith(`${to}/`));
   return (
     <Link to={to} className={`nav-link ${isActive ? "active" : ""}`}>
       {children}
@@ -40,6 +43,8 @@ export default function App() {
   const token = getToken();
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const [role, setRole] = useState("");
+  const navRef = useRef<HTMLElement | null>(null);
+  const [navIndicator, setNavIndicator] = useState({ left: 0, width: 0, visible: false });
   const { pathname } = useLocation();
   const isFullBleedLightPage = ["/", "/recommend/manual", "/recommend/image", "/recipes", "/recipes/popular", "/login", "/admin"].includes(pathname);
 
@@ -58,6 +63,34 @@ export default function App() {
       .catch(() => setRole(""));
   }, [token]);
 
+  useLayoutEffect(() => {
+    function updateNavIndicator() {
+      const nav = navRef.current;
+      const active = nav?.querySelector<HTMLElement>(".nav-link.active");
+      if (!nav || !active) {
+        setNavIndicator((current) => ({ ...current, visible: false }));
+        return;
+      }
+
+      const navRect = nav.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      setNavIndicator({
+        left: activeRect.left - navRect.left + nav.scrollLeft,
+        width: activeRect.width,
+        visible: true,
+      });
+    }
+
+    updateNavIndicator();
+    window.addEventListener("resize", updateNavIndicator);
+    const nav = navRef.current;
+    nav?.addEventListener("scroll", updateNavIndicator, { passive: true });
+    return () => {
+      window.removeEventListener("resize", updateNavIndicator);
+      nav?.removeEventListener("scroll", updateNavIndicator);
+    };
+  }, [pathname, role, token]);
+
   function toggleTheme() {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
   }
@@ -71,10 +104,15 @@ export default function App() {
               <Link to="/" className="brand" aria-label="Culina AI ana sayfa">
                 Culina AI
               </Link>
-              <nav className="nav-links" aria-label="Ana menü">
-                <NavLink to="/recipes">Discover</NavLink>
-                <NavLink to="/recipes/popular">Library</NavLink>
-                <NavLink to="/recommend/image">Analytics</NavLink>
+              <nav className="nav-links" aria-label="Ana menü" ref={navRef}>
+                <span
+                  className={`nav-active-indicator ${navIndicator.visible ? "visible" : ""}`}
+                  style={{ transform: `translateX(${navIndicator.left}px)`, width: navIndicator.width }}
+                  aria-hidden="true"
+                />
+                <NavLink to="/recipes">Tarifler</NavLink>
+                <NavLink to="/recipes/popular">Popüler</NavLink>
+                <NavLink to="/recommend/image">Fotoğraf</NavLink>
                 <NavLink to="/recommend/manual">Manuel</NavLink>
                 {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
                 {role === "admin" && <NavLink to="/admin">Admin</NavLink>}

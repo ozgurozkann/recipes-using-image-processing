@@ -104,11 +104,24 @@ export default function PopularRecipesPage() {
 }
 
 function PodiumCard({ recipe, rank, size }: { recipe: PopularRecipe; rank: 1 | 2 | 3; size: "winner" | "side" }) {
-  const photo = getRecipePhoto(recipe, size === "winner" ? 720 : 560, size === "winner" ? 540 : 420);
+  const width = size === "winner" ? 920 : 760;
+  const height = size === "winner" ? 620 : 520;
+  const photo = getRecipePhoto(recipe, width, height);
+  const fallbackPhoto = getRecipePhoto({ ...recipe, image_url: "" }, width, height);
+
   return (
     <Link to={`/recipes/${recipe.id}`} className={`popular-podium-card rank-${rank} ${size}`}>
       <span className="popular-rank">{rank}</span>
-      <div className="popular-podium-image"><img src={photo} alt={recipe.title} loading="lazy" /></div>
+      <div className="popular-podium-image">
+        <img
+          src={photo}
+          alt={recipe.title}
+          loading="lazy"
+          onError={(e) => {
+            if (e.currentTarget.src !== fallbackPhoto) e.currentTarget.src = fallbackPhoto;
+          }}
+        />
+      </div>
       <h3>{recipe.title}</h3>
       <div className="popular-score-row">
         <span><span className="material-symbols-outlined filled" aria-hidden="true">favorite</span>{formatCount(recipe.favorite_count)}</span>
@@ -119,7 +132,7 @@ function PodiumCard({ recipe, rank, size }: { recipe: PopularRecipe; rank: 1 | 2
 }
 
 function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank: number; onRefresh: () => void }) {
-  const photo = getRecipePhoto(recipe, 640, 480);
+  const photo = getRecipePhoto(recipe, 720, 540);
   const difficulty = recipe.difficulty ? DIFFICULTY_LABEL[recipe.difficulty] || recipe.difficulty : "Kolay";
   const isEasy = recipe.difficulty !== "medium" && recipe.difficulty !== "hard";
 
@@ -145,7 +158,15 @@ function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank:
     <article className="popular-card">
       <div className="popular-card-image">
         <Link to={`/recipes/${recipe.id}`} className="popular-image-link">
-          <img src={photo} alt={recipe.title} loading="lazy" />
+          <img
+            src={photo}
+            alt={recipe.title}
+            loading="lazy"
+            onError={(e) => {
+              const fallbackPhoto = getRecipePhoto({ ...recipe, image_url: "" }, 720, 540);
+              if (e.currentTarget.src !== fallbackPhoto) e.currentTarget.src = fallbackPhoto;
+            }}
+          />
         </Link>
         <span className={`popular-difficulty ${isEasy ? "easy" : "medium"}`}>
           <span className="material-symbols-outlined" aria-hidden="true">{isEasy ? "bolt" : "trending_up"}</span>
