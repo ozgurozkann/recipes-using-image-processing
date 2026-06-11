@@ -27,12 +27,6 @@ export default function HomePage() {
                 <span className="material-symbols-outlined">auto_awesome</span>
                 Keşfetmeye Başla
               </Link>
-              <Link
-                to="/recommend/image"
-                className="glass-card px-8 py-4 rounded-full font-semibold text-primary hover:bg-white/60 transition-all active:scale-95 border border-primary/10"
-              >
-                Fotoğrafla Öneri
-              </Link>
             </div>
           </div>
 
@@ -209,7 +203,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/register"
+                to="/recommend"
                 className="bg-primary text-white px-10 py-4 rounded-full font-bold hover:bg-primary-container transition-all shadow-xl shadow-primary/10 active:scale-95 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">person_add</span>

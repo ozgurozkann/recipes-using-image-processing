@@ -208,26 +208,32 @@ export default function CombinedRecommendPage() {
 
           {/* LEFT: Photo Upload */}
           <div className={`flex flex-col gap-4 ${activeTab === "manual" ? "hidden md:flex" : "flex"}`}>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-secondary text-lg">photo_camera</span>
-              </div>
-              <h2 className="font-bold text-on-surface">Fotoğraf Ekle</h2>
-              {images.length > 0 && (
-                <span className="ml-auto text-xs bg-secondary/10 text-secondary font-bold px-2.5 py-0.5 rounded-full">
-                  {images.length} fotoğraf
-                </span>
-              )}
+            <div className="flex items-center gap-3 mb-1">
+              <span className="material-symbols-outlined text-secondary text-3xl">photo_camera</span>
+              <h2 className="text-xl font-bold text-on-surface tracking-tight">
+                Fotoğraf ile <span className="text-secondary">Öneri</span>
+              </h2>
             </div>
+            <p className="text-on-surface-variant text-sm -mt-2 mb-1">
+              Birden fazla malzeme fotoğrafı yükle, her biri ayrı analiz edilsin ve hepsini içeren tarifler gelsin.
+            </p>
 
             {/* Drop zone */}
             <div
-              className={`glass-card rounded-[20px] p-10 flex flex-col items-center text-center cursor-pointer transition-all relative overflow-hidden min-h-[180px] justify-center ${dragging ? "border-secondary/40 bg-secondary/5" : "hover:border-secondary/20"}`}
+              className={`glass-card rounded-[24px] p-10 flex flex-col items-center text-center cursor-pointer transition-all group relative overflow-hidden min-h-[260px] justify-center ${dragging ? "border-primary/40 bg-primary/5" : "hover:border-primary/20"}`}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
               onClick={() => inputRef.current?.click()}
             >
+              {/* Scan line */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[24px]">
+                <div
+                  className="w-full h-1 bg-primary/30 absolute top-0 shadow-[0_0_15px_rgba(21,66,18,0.5)]"
+                  style={{ animation: "scan 3s ease-in-out infinite" }}
+                />
+              </div>
+
               <input
                 ref={inputRef}
                 type="file"
@@ -236,9 +242,27 @@ export default function CombinedRecommendPage() {
                 className="hidden"
                 onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.currentTarget.value = ""; }}
               />
-              <span className="material-symbols-outlined text-secondary/50 text-5xl mb-3">add_photo_alternate</span>
-              <p className="font-semibold text-on-surface text-sm">Fotoğraf sürükle veya tıkla</p>
-              <p className="text-xs text-on-surface-variant mt-1">JPG, PNG, WEBP · Birden fazla seçilebilir</p>
+
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-20 h-20 mb-5 bg-primary-fixed/40 rounded-full flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform duration-500">
+                  <span className="material-symbols-outlined text-primary text-4xl" style={{ animation: "pulse 2s infinite" }}>
+                    center_focus_strong
+                  </span>
+                </div>
+                <h3 className="font-bold text-on-surface mb-1">
+                  {images.length > 0 ? `${images.length} fotoğraf seçildi` : "AI Tarayıcıyı Başlat"}
+                </h3>
+                <p className="text-on-surface-variant text-sm">
+                  {images.length > 0
+                    ? `${(images.reduce((s, i) => s + i.file.size, 0) / 1024).toFixed(0)} KB · JPG, PNG, WEBP`
+                    : "Görselleri buraya sürükleyin veya tıklayın"}
+                </p>
+                <div className="mt-3">
+                  <span className="px-3 py-1 bg-surface-container-highest rounded-full text-[10px] font-bold tracking-widest uppercase opacity-60">
+                    Neural Engine Active
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Image preview grid */}
