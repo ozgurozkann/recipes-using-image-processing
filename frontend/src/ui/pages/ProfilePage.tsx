@@ -238,8 +238,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 {[
                   { to: "/recipes/add", icon: "add_circle", label: "Tarif Ekle", desc: "Kendi tarifini paylaş" },
-                  { to: "/recommend/manual", icon: "grass", label: "Tarif Önerisi Al", desc: "Manuel malzeme seç" },
-                  { to: "/recommend/image", icon: "photo_camera", label: "Fotoğrafla Öner", desc: "AI malzeme tespiti" },
+                  { to: "/recommend", icon: "grass", label: "Tarif Önerisi Al", desc: "Manuel malzeme seç" },
                   { to: "/recipes/popular", icon: "star", label: "Popüler Tarifler", desc: "En çok sevilen tarifler" },
                 ].map((l) => (
                   <Link key={l.to} to={l.to}
