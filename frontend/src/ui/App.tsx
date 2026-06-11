@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { api } from "./api";
 import { getToken, logout } from "./authStore";
 import RequireAuth from "./components/RequireAuth";
 import ToastContainer from "./components/Toast";
@@ -38,11 +39,24 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 export default function App() {
   const token = getToken();
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+  const [role, setRole] = useState("");
+  const { pathname } = useLocation();
+  const isFullBleedLightPage = ["/", "/recommend/manual", "/recommend/image", "/recipes", "/recipes/popular", "/login", "/admin"].includes(pathname);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     try { localStorage.setItem("theme", theme); } catch {}
   }, [theme]);
+
+  useEffect(() => {
+    if (!token) {
+      setRole("");
+      return;
+    }
+    api<{ role: string }>("GET", "/auth/me")
+      .then((me) => setRole(me.role))
+      .catch(() => setRole(""));
+  }, [token]);
 
   function toggleTheme() {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
@@ -50,47 +64,58 @@ export default function App() {
 
   return (
     <>
-      <div className="container">
+      <div className={`container ${isFullBleedLightPage ? "landing-shell" : ""}`}>
         <header className="topbar">
-          <div className="nav">
-            <Link to="/" className="brand" style={{ textDecoration: "none" }}>
-              <div className="brand-icon">🍽</div>
-              Recipes
-            </Link>
-            <NavLink to="/recipes">Tarifler</NavLink>
-            <NavLink to="/recipes/popular">Popüler</NavLink>
-            <NavLink to="/recommend/manual">Manuel</NavLink>
-            <NavLink to="/recommend/image">Fotoğraf</NavLink>
-            {token && <NavLink to="/recipes/add">+ Ekle</NavLink>}
-            {token && <NavLink to="/admin">Admin</NavLink>}
-          </div>
+          <div className="topbar-inner">
+            <div className="topbar-left">
+              <Link to="/" className="brand" aria-label="Culina AI ana sayfa">
+                Culina AI
+              </Link>
+              <nav className="nav-links" aria-label="Ana menü">
+                <NavLink to="/recipes">Discover</NavLink>
+                <NavLink to="/recipes/popular">Library</NavLink>
+                <NavLink to="/recommend/image">Analytics</NavLink>
+                <NavLink to="/recommend/manual">Manuel</NavLink>
+                {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
+                {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
+              </nav>
+            </div>
 
-          <div className="nav" style={{ gap: 4 }}>
-            {token ? (
-              <>
-                <NavLink to="/favorites">♡ Favoriler</NavLink>
-                <NavLink to="/saved">⬇ Kaydettiklerim</NavLink>
-                <NavLink to="/profile">Profil</NavLink>
-                <button className="btn btn-sm danger" onClick={logout} style={{ marginLeft: 2 }}>
-                  Çıkış
-                </button>
-              </>
-            ) : (
-              <>
-                <NavLink to="/login">Giriş</NavLink>
-                <Link to="/register" className="btn btn-sm primary" style={{ marginLeft: 4 }}>
-                  Kayıt Ol
-                </Link>
-              </>
-            )}
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
-              style={{ marginLeft: 4 }}
-            >
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
+            <div className="topbar-actions">
+              <label className="nav-search" aria-label="Tarif ara">
+                <span className="material-symbols-outlined">search</span>
+                <input placeholder="Search recipes..." type="search" />
+              </label>
+              {token ? (
+                <>
+                  <Link className="topbar-icon-btn" to="/favorites" title="Favoriler" aria-label="Favoriler">
+                    <span className="material-symbols-outlined">favorite</span>
+                  </Link>
+                  <Link className="topbar-icon-btn" to="/saved" title="Kaydettiklerim" aria-label="Kaydettiklerim">
+                    <span className="material-symbols-outlined">bookmark</span>
+                  </Link>
+                  <Link className="topbar-icon-btn" to="/profile" title="Profil" aria-label="Profil">
+                    <span className="material-symbols-outlined">account_circle</span>
+                  </Link>
+                  <button className="topbar-icon-btn danger" onClick={logout} title="Çıkış" aria-label="Çıkış">
+                    <span className="material-symbols-outlined">logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link className="nav-auth-link" to="/login">Giriş</Link>
+                  <Link className="nav-auth-primary" to="/register">Kayıt Ol</Link>
+                </>
+              )}
+              <button
+                className="topbar-icon-btn"
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
+                aria-label={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
+              >
+                <span className="material-symbols-outlined">{theme === "dark" ? "light_mode" : "dark_mode"}</span>
+              </button>
+            </div>
           </div>
         </header>
 

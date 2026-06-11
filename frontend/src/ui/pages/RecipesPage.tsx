@@ -1,10 +1,23 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
 import { PageLoader } from "../components/Spinner";
+import { toast, toastError } from "../components/Toast";
+import { getRecipePhoto } from "../recipePhotos";
+
+type Recipe = {
+  id: number;
+  title: string;
+  description?: string;
+  favorite_count: number;
+  save_count: number;
+  difficulty?: string;
+  cooking_time?: number;
+  serving_count?: number;
+  image_url?: string;
+};
 
 const PAGE_SIZE = 12;
-
 const DIFFICULTY_OPTIONS = [
   { value: "", label: "Tüm Zorluklar" },
   { value: "easy", label: "Kolay" },
@@ -13,7 +26,7 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 export default function RecipesPage() {
-  const [items, setItems] = useState<RecipeCardData[]>([]);
+  const [items, setItems] = useState<Recipe[]>([]);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -28,14 +41,9 @@ export default function RecipesPage() {
     const params = new URLSearchParams({ skip: String(skip), limit: String(PAGE_SIZE) });
     if (q) params.set("q", q);
     if (difficulty) params.set("difficulty", difficulty);
-
     const setter = append ? setLoadingMore : setLoading;
     setter(true);
-
-    api<{ items: RecipeCardData[]; total: number; has_more: boolean }>(
-      "GET",
-      `/recipes?${params}`
-    )
+    api<{ items: Recipe[]; total: number; has_more: boolean }>("GET", `/recipes?${params}`)
       .then((d) => {
         setItems((prev) => (append ? [...prev, ...d.items] : d.items));
         setTotal(d.total);
@@ -46,7 +54,6 @@ export default function RecipesPage() {
       .finally(() => setter(false));
   }
 
-  // İlk yükleme & filtre değişiminde sıfırdan başla
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -56,87 +63,97 @@ export default function RecipesPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [q, difficulty]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function loadMore() {
-    fetchPage(skipRef.current, true);
-  }
-
   function reload() {
     skipRef.current = 0;
     fetchPage(0, false);
   }
 
   return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">Tüm <span>Tarifler</span></h1>
-        <p className="page-sub">Keşfet, favoriyle, pişir.</p>
-      </div>
+    <main className="recipes-page">
+      <section className="recipes-main">
+        <div className="recipes-hero">
+          <span>Tüm Tarifler</span>
+          <h1>Bugünün lezzet listesini keşfet.</h1>
+          <p>Arama, zorluk filtresi ve hızlı aksiyonlarla tarifleri rahatça tara.</p>
+        </div>
 
-      {/* Filters */}
-      <div className="card card-flat" style={{ padding: "14px 18px", marginBottom: 4 }}>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ position: "relative", flex: "1 1 240px" }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none" }}>🔍</span>
-            <input
-              className="input"
-              placeholder="Tarif ara…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              style={{ paddingLeft: 38 }}
-            />
+        <div className="recipes-filter-card">
+          <div className="recipes-search">
+            <span className="material-symbols-outlined" aria-hidden="true">search</span>
+            <input placeholder="Tarif ara..." value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-          <select
-            className="input"
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
-            style={{ flex: "0 1 160px" }}
-          >
-            {DIFFICULTY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <div className="badge" style={{ whiteSpace: "nowrap" }}>
-            {total} tarif
+          <div className="recipes-filter-actions">
+            <select className="recipes-select" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+              {DIFFICULTY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <div className="recipes-total">{total} tarif</div>
           </div>
         </div>
-      </div>
 
-      {err && <div className="error" style={{ marginTop: 12 }}>{err}</div>}
+        {err && <div className="error" style={{ marginTop: 12 }}>{err}</div>}
 
-      {loading ? (
-        <PageLoader />
-      ) : items.length === 0 ? (
-        <div className="empty card" style={{ marginTop: 16 }}>
-          <div className="empty-icon">🍽️</div>
-          <div className="empty-title">Tarif bulunamadı</div>
-          <div className="empty-sub">Farklı bir arama deneyin.</div>
-        </div>
-      ) : (
-        <>
-          <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", margin: "16px 0 0" }}>
-            {items.map((r) => (
-              <RecipeCard key={r.id} recipe={r} onRefresh={reload} />
-            ))}
-          </div>
-
-          {hasMore && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 24, marginBottom: 8 }}>
-              <button
-                className="btn btn-secondary"
-                onClick={loadMore}
-                disabled={loadingMore}
-                style={{ minWidth: 180 }}
-              >
-                {loadingMore ? "Yükleniyor…" : "Daha Fazla Göster"}
-              </button>
+        {loading ? (
+          <PageLoader />
+        ) : items.length === 0 ? (
+          <div className="recipes-empty">Tarif bulunamadı. Farklı bir arama deneyin.</div>
+        ) : (
+          <>
+            <div className="recipes-grid">
+              {items.map((recipe) => (
+                <RecipeTile key={recipe.id} recipe={recipe} onRefresh={reload} />
+              ))}
             </div>
-          )}
+            {hasMore && (
+              <button className="recipes-more" disabled={loadingMore} onClick={() => fetchPage(skipRef.current, true)}>
+                {loadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
+              </button>
+            )}
+          </>
+        )}
+      </section>
+    </main>
+  );
+}
 
-          {!hasMore && items.length > 0 && (
-            <p style={{ textAlign: "center", color: "var(--text-muted)", marginTop: 24, fontSize: 14 }}>
-              Tüm {total} tarif gösterildi.
-            </p>
-          )}
-        </>
-      )}
-    </div>
+function RecipeTile({ recipe, onRefresh }: { recipe: Recipe; onRefresh: () => void }) {
+  const photo = getRecipePhoto(recipe, 640, 480);
+
+  async function favorite(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      await api("POST", `/recipes/${recipe.id}/favorite`);
+      toast("Favorilere eklendi");
+      onRefresh();
+    } catch (error: any) { toastError("Hata", error.message); }
+  }
+
+  async function save(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      await api("POST", `/recipes/${recipe.id}/save`);
+      toast("Kaydedildi");
+      onRefresh();
+    } catch (error: any) { toastError("Hata", error.message); }
+  }
+
+  return (
+    <article className="recipes-card">
+      <Link to={`/recipes/${recipe.id}`} className="recipes-card-image">
+        <img src={photo} alt={recipe.title} loading="lazy" />
+        {recipe.difficulty && <span>{recipe.difficulty === "easy" ? "Kolay" : recipe.difficulty === "medium" ? "Orta" : "Zor"}</span>}
+      </Link>
+      <div className="recipes-card-body">
+        <Link to={`/recipes/${recipe.id}`}><h3>{recipe.title}</h3></Link>
+        <p>{recipe.description || "Tarif detaylarını görüntüleyin."}</p>
+        <div className="recipes-card-meta">
+          <span>{recipe.cooking_time || 0} dk</span>
+          <span>{recipe.serving_count || 1} kişi</span>
+        </div>
+        <div className="recipes-card-footer">
+          <div><button onClick={favorite}>♡ {recipe.favorite_count}</button><button onClick={save}>↧ {recipe.save_count}</button></div>
+          <Link to={`/recipes/${recipe.id}`}>Gör</Link>
+        </div>
+      </div>
+    </article>
   );
 }

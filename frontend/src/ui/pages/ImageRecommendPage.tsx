@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
-import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
 import Spinner from "../components/Spinner";
 import { toastError, toast } from "../components/Toast";
+import { getRecipePhoto } from "../recipePhotos";
 
 type SelectedImage = { file: File; preview: string };
 type DetectedIng = { name: string; confidence: number; source?: string | null };
-type RecItem = RecipeCardData & {
+type RecItem = {
+  id?: number;
   recipeId: number;
+  title: string;
+  description?: string;
+  difficulty?: string;
+  cooking_time?: number;
+  serving_count?: number;
+  image_url?: string;
   matchScore: number;
   matchedIngredients: string[];
   missingIngredients: string[];
@@ -88,12 +96,7 @@ export default function ImageRecommendPage() {
         `${images.length} fotoğraf analiz edildi, ${out.items.length} tarif önerisi bulundu.`
       );
       setDetected(out.detectedIngredients ?? []);
-      setItems(out.items.map((x) => ({
-        ...x,
-        id: x.recipeId,
-        favorite_count: x.favoriteCount,
-        save_count: x.saveCount,
-      })));
+      setItems(out.items ?? []);
     } catch (e: any) {
       toastError("Hata", e.message);
     } finally {
@@ -104,209 +107,181 @@ export default function ImageRecommendPage() {
   const totalSizeKb = images.reduce((sum, image) => sum + image.file.size, 0) / 1024;
 
   return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">📸 Fotoğraf ile <span>Öneri</span></h1>
-        <p className="page-sub">
-          Birden fazla malzeme fotoğrafı yükle, her biri ayrı analiz edilsin ve hepsini içeren tarifler gelsin.
-        </p>
-      </div>
+    <main className="photo-page">
+      <nav className="photo-breadcrumbs" aria-label="Sayfa yolu">
+        <Link to="/">ANA SAYFA</Link>
+        <span className="material-symbols-outlined">chevron_right</span>
+        <strong>FOTOĞRAF İLE ÖNERİ</strong>
+      </nav>
 
-      <div className="grid" style={{ gridTemplateColumns: "minmax(320px, 400px) 1fr", alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <div
-              className={`upload-zone${dragging ? " dragging" : ""}`}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
-              onClick={() => inputRef.current?.click()}
-              style={{ margin: 0, borderRadius: 0, border: "none", borderBottom: "1px dashed var(--border)" }}
-            >
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  if (e.target.files) handleFiles(e.target.files);
-                  e.currentTarget.value = "";
-                }}
-              />
-              <div className="upload-icon" style={{ animation: images.length ? "none" : "float 3s ease-in-out infinite" }}>
-                {images.length ? "✅" : "📂"}
-              </div>
-              <div className="upload-title">
-                {images.length ? `${images.length} fotoğraf seçildi` : "Dosyaları sürükle veya tıkla"}
-              </div>
-              <div className="upload-sub">
-                {images.length
-                  ? `${totalSizeKb.toFixed(0)} KB · JPG, PNG, WEBP`
-                  : "Birden fazla JPG, PNG veya WEBP yükleyebilirsin"}
-              </div>
+      <section className="photo-hero">
+        <div className="photo-title-row">
+          <span className="material-symbols-outlined">photo_camera</span>
+          <h1>Fotoğraf ile <em>Öneri</em></h1>
+        </div>
+        <p>Birden fazla malzeme fotoğrafı yükle, her biri ayrı analiz edilsin ve hepsini içeren tarifler gelsin.</p>
+      </section>
+
+      <section className="photo-workspace">
+        <div className="photo-upload-column">
+          <div
+            className={`photo-drop-card${dragging ? " dragging" : ""}${images.length ? " has-images" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            onClick={() => inputRef.current?.click()}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) handleFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
+            <div className="photo-scan-line" />
+            <div className="photo-scanner-icon">
+              <span className="material-symbols-outlined">center_focus_strong</span>
             </div>
-
-            {images.length > 0 && (
-              <div style={{ padding: 16 }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-                    gap: 10,
-                  }}
-                >
-                  {images.map((image, index) => (
-                    <div key={imageKey(image.file)} style={{ position: "relative" }}>
-                      <img
-                        src={image.preview}
-                        alt={image.file.name}
-                        className="img-preview"
-                        style={{ aspectRatio: "1 / 1", height: "auto", objectFit: "cover", margin: 0 }}
-                      />
-                      <button
-                        type="button"
-                        className="btn icon"
-                        onClick={(e) => { e.stopPropagation(); removeImage(index); }}
-                        title="Fotoğrafı kaldır"
-                        aria-label="Fotoğrafı kaldır"
-                        style={{
-                          position: "absolute",
-                          right: 6,
-                          top: 6,
-                          width: 30,
-                          height: 30,
-                          background: "rgba(20,20,30,0.75)",
-                          color: "white",
-                          borderColor: "rgba(255,255,255,0.18)",
-                        }}
-                      >
-                        ×
-                      </button>
-                      <div
-                        title={image.file.name}
-                        style={{
-                          marginTop: 6,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: "var(--text)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {image.file.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <h2>{images.length ? `${images.length} fotoğraf seçildi` : "AI Tarayıcıyı Başlat"}</h2>
+            <p>{images.length ? `${totalSizeKb.toFixed(0)} KB · JPG, PNG, WEBP` : "Görselleri buraya sürükleyin veya tıklayın"}</p>
+            <div className="photo-engine-pill">Neural Engine Active</div>
           </div>
 
-          <button
-            className="btn primary btn-lg"
-            onClick={submit}
-            disabled={images.length === 0 || loading}
-            style={{ justifyContent: "center" }}
-          >
-            {loading ? <><Spinner size="sm" /> Fotoğraflar analiz ediliyor...</> : "🚀 Yükle ve Analiz Et"}
+          <button className="photo-analyze-btn" disabled={images.length === 0 || loading} onClick={submit}>
+            {loading ? <><Spinner size="sm" /> Fotoğraflar analiz ediliyor</> : <><span className="material-symbols-outlined">auto_awesome</span>Yükle ve Analiz Et</>}
           </button>
 
           {detected.length > 0 && (
-            <div className="card" style={{ animation: "scaleIn 0.3s ease both" }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>🔍 Tespit Edilen Malzemeler</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="photo-detected-card">
+              <div className="photo-card-head"><span className="material-symbols-outlined">travel_explore</span><h3>Tespit Edilen Malzemeler</h3></div>
+              <div className="photo-detected-list">
                 {detected.map((d) => (
-                  <div key={`${d.name}-${d.source ?? ""}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</div>
-                      {d.source && (
-                        <div style={{ color: "var(--muted)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {d.source}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                      <div style={{ width: 80, height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${d.confidence * 100}%`,
-                            background: "linear-gradient(90deg, var(--primary), var(--ok))",
-                            borderRadius: 3,
-                            animation: "scoreGrow 0.6s ease both",
-                          }}
-                        />
-                      </div>
-                      <span className="badge ok">{Math.round(d.confidence * 100)}%</span>
-                    </div>
+                  <div key={`${d.name}-${d.source ?? ""}`} className="photo-detected-row">
+                    <div><strong>{d.name}</strong>{d.source && <span>{d.source}</span>}</div>
+                    <div className="photo-confidence"><i style={{ width: `${Math.round(d.confidence * 100)}%` }} /><b>{Math.round(d.confidence * 100)}%</b></div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          <div className="card" style={{ background: "var(--primary-subtle)", borderColor: "rgba(124,92,255,0.25)" }}>
-            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.7 }}>
-              <strong style={{ color: "var(--primary-light)" }}>ℹ Çoklu analiz</strong><br />
-              Her fotoğraf modele ayrı gönderilir. Sonuçlarda, tespit edilen malzemelerin tamamını içeren tarifler listelenir.
-            </div>
-          </div>
         </div>
 
-        <div>
-          {loading && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 280, gap: 20 }}>
-              <div style={{ position: "relative", width: 80, height: 80 }}>
-                <div style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin 0.8s linear infinite" }} />
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
-                  🤖
-                </div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Fotoğraflar tek tek analiz ediliyor...</div>
-                <div style={{ color: "var(--muted)", fontSize: 14 }}>Malzemeler birleştiriliyor, tarifler eşleştiriliyor</div>
+        <div className="photo-preview-panel">
+          {images.length === 0 && !loading && items.length === 0 && (
+            <div className="photo-empty-state">
+              <div className="photo-empty-icon"><span className="material-symbols-outlined">add_a_photo</span></div>
+              <h3>Fotoğraf yükleyip analiz et</h3>
+              <p>AI malzemeleri tespit edecek ve hepsini içeren tarifleri listeleyecek.</p>
+              <div className="photo-placeholder-row">
+                <span className="material-symbols-outlined">image</span>
+                <span className="material-symbols-outlined">image</span>
+                <span className="material-symbols-outlined dashed">add</span>
               </div>
             </div>
           )}
 
-          {!loading && items.length === 0 && (
-            <div className="empty card">
-              <div className="empty-icon" style={{ animation: "float 3s ease-in-out infinite" }}>📸</div>
-              <div className="empty-title">Fotoğraf yükleyip analiz et</div>
-              <div className="empty-sub">AI malzemeleri tespit edecek ve hepsini içeren tarifleri listeleyecek.</div>
+          {images.length > 0 && !loading && items.length === 0 && (
+            <div className="photo-preview-state">
+              <div className="photo-preview-grid">
+                {images.map((image, index) => (
+                  <figure key={imageKey(image.file)} className="photo-preview-tile">
+                    <img src={image.preview} alt={image.file.name} />
+                    <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(index); }} aria-label="Fotoğrafı kaldır">
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                    <figcaption>{image.file.name}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div className="photo-loading-state">
+              <div className="photo-loading-ring"><span className="material-symbols-outlined">memory</span></div>
+              <h3>Fotoğraflar tek tek analiz ediliyor</h3>
+              <p>Malzemeler birleştiriliyor, tarifler eşleştiriliyor.</p>
             </div>
           )}
 
           {!loading && items.length > 0 && (
-            <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div className="photo-results">
+              <div className="photo-results-head">
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
-                    {items.length} Tarif Önerisi
-                  </h2>
-                  <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
-                    Tespit edilen tüm malzemeleri içeren tarifler
-                  </div>
+                  <h2>{items.length} Tarif Önerisi</h2>
+                  <p>Tespit edilen malzemelere göre eşleşen tarifler</p>
                 </div>
-                <span className="badge ok" style={{ animation: "scaleIn 0.3s ease both" }}>Analiz tamamlandı ✓</span>
+                <span><span className="material-symbols-outlined">check_circle</span>Analiz tamamlandı</span>
               </div>
-              <div className="grid stagger" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", margin: 0 }}>
-                {items.map((x) => (
-                  <RecipeCard
-                    key={x.recipeId}
-                    recipe={{ ...x, id: x.recipeId, favorite_count: x.favoriteCount, save_count: x.saveCount }}
-                    matchScore={x.matchScore}
-                    matchedIngredients={x.matchedIngredients}
-                    missingIngredients={x.missingIngredients}
-                  />
-                ))}
+              <div className="photo-result-grid">
+                {items.map((item) => <PhotoResultCard key={item.recipeId} item={item} />)}
               </div>
-            </>
+            </div>
           )}
         </div>
+      </section>
+
+      <section className="photo-info-card">
+        <div className="photo-info-icon"><span className="material-symbols-outlined">query_stats</span></div>
+        <div>
+          <div className="photo-info-title"><h2>Gelişmiş Çoklu Analiz</h2><span>v2.0 Neural</span></div>
+          <p>Her görsel bağımsız işlenir. Sistem farklı fotoğraflardan gelen malzemeleri birleştirir ve tarif eşleşmelerini buna göre çıkarır.</p>
+        </div>
+      </section>
+
+      <section className="photo-feature-grid">
+        <Feature icon="texture" title="Doku Tanıma" text="Malzemelerin görsel ipuçlarını ayrıştırarak daha isabetli öneriler üretir." />
+        <Feature icon="science" title="Bileşen Ayrıştırma" text="Karmaşık yemek fotoğraflarını temel malzeme adaylarına ayırır." />
+        <Feature icon="hub" title="Lezzet Matrisi" text="Bulunan malzemeler arasındaki uyuma göre tarifleri önceliklendirir." />
+      </section>
+    </main>
+  );
+}
+
+function Feature({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return (
+    <article className="photo-feature-card">
+      <div><span className="material-symbols-outlined">{icon}</span></div>
+      <h3>{title}</h3>
+      <p>{text}</p>
+      <footer><span>Processing</span><span className="material-symbols-outlined">arrow_forward</span></footer>
+    </article>
+  );
+}
+
+function PhotoResultCard({ item }: { item: RecItem }) {
+  const recipe = {
+    id: item.recipeId,
+    title: item.title,
+    image_url: item.image_url,
+  };
+  const photo = getRecipePhoto(recipe, 640, 460);
+  return (
+    <article className="photo-result-card">
+      <Link to={`/recipes/${item.recipeId}`} className="photo-result-image">
+        <img src={photo} alt={item.title} loading="lazy" />
+        <span>{Math.round(item.matchScore)}% eşleşme</span>
+      </Link>
+      <div className="photo-result-body">
+        <h3>{item.title}</h3>
+        <div className="photo-result-meta">
+          {item.cooking_time ? <span><span className="material-symbols-outlined">schedule</span>{item.cooking_time} dk</span> : null}
+          {item.serving_count ? <span><span className="material-symbols-outlined">group</span>{item.serving_count} kişi</span> : null}
+        </div>
+        {!!item.matchedIngredients.length && (
+          <div className="photo-pill-row">
+            {item.matchedIngredients.slice(0, 4).map((name) => <span key={name}>{name}</span>)}
+          </div>
+        )}
+        <div className="photo-result-footer">
+          <span><span className="material-symbols-outlined">favorite</span>{item.favoriteCount}</span>
+          <span><span className="material-symbols-outlined">bookmark</span>{item.saveCount}</span>
+          <Link to={`/recipes/${item.recipeId}`}>Gör</Link>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

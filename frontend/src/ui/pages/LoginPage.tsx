@@ -26,88 +26,37 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 0" }}>
-      <div style={{ width: "100%", maxWidth: 460, animation: "scaleIn 0.4s var(--transition-bounce) both" }}>
-
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 12, animation: "heroFloat 4s ease-in-out infinite", display: "inline-block" }}>👨‍🍳</div>
-          <h1 className="page-title">Tekrar hoş geldin!</h1>
-          <p className="page-sub">Hesabına giriş yap ve tarifleri keşfet</p>
+    <main className="login-page">
+      <div className="login-float login-float-one"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=260&h=260&fit=crop&auto=format" alt="" /></div>
+      <div className="login-float login-float-two"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=260&h=260&fit=crop&auto=format" alt="" /></div>
+      <section className="login-main">
+        <div className="login-heading">
+          <span>Lezzet Pusulası</span>
+          <h1>Tekrar hoş geldin</h1>
+          <p>Tariflerini, favorilerini ve kaydettiklerini kaldığın yerden yönet.</p>
         </div>
-
-        <div className="card card-flat" style={{ padding: 32 }}>
-          {err && (
-            <div className="error" style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>⚠</span> {err}
+        <form className="login-card" onSubmit={submit}>
+          {err && <div className="login-error">{err}</div>}
+          <label className="login-field">
+            <span>E-posta</span>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@ornek.com" required autoFocus />
+          </label>
+          <label className="login-field">
+            <span>Şifre</span>
+            <div className="login-password">
+              <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              <button type="button" onClick={() => setShowPass((v) => !v)}>{showPass ? "Gizle" : "Göster"}</button>
             </div>
-          )}
-
-          <form onSubmit={submit}>
-            <div className="field" style={{ marginTop: 0 }}>
-              <label className="label">E-posta</label>
-              <input
-                className="input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="mail@ornek.com"
-                required
-                autoFocus
-              />
-            </div>
-
-            <div className="field">
-              <label className="label">Şifre</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  className="input"
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  style={{ paddingRight: 44 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                    background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 16 }}
-                >
-                  {showPass ? "🙈" : "👁"}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn primary btn-lg"
-              disabled={loading}
-              style={{ width: "100%", marginTop: 24, justifyContent: "center" }}
-            >
-              {loading ? <><Spinner size="sm" /> Giriş yapılıyor…</> : "Giriş Yap →"}
-            </button>
-          </form>
-
-          <div style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "var(--muted)" }}>
-            Hesabın yok mu?{" "}
-            <Link to="/register" style={{ color: "var(--primary-light)", fontWeight: 600 }}>
-              Kayıt ol
-            </Link>
+          </label>
+          <button className="login-submit" type="submit" disabled={loading}>
+            {loading ? <><Spinner size="sm" /> Giriş yapılıyor</> : "Giriş Yap"}
+          </button>
+          <div className="login-register">Hesabın yok mu? <Link to="/register">Kayıt ol</Link></div>
+          <div className="login-hint">
+            Test: <code>admin@example.com</code> / <code>admin1234</code>
           </div>
-        </div>
-
-        {/* Hint card */}
-        <div className="card" style={{ marginTop: 14, padding: 16, background: "var(--primary-subtle)", borderColor: "rgba(124,92,255,0.25)" }}>
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>
-            <strong style={{ color: "var(--primary-light)" }}>İpucu:</strong> Test için seed admin{" "}
-            <code style={{ background: "var(--panel2)", padding: "1px 6px", borderRadius: 4 }}>admin@example.com</code>
-            {" "}/ {" "}
-            <code style={{ background: "var(--panel2)", padding: "1px 6px", borderRadius: 4 }}>admin1234</code>
-          </div>
-        </div>
-      </div>
-    </div>
+        </form>
+      </section>
+    </main>
   );
 }
