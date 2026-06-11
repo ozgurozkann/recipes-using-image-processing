@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Culina AI | Admin Paneli</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#631800",
+                    "inverse-surface": "#313030",
+                    "on-primary-container": "#9dd090",
+                    "on-secondary": "#ffffff",
+                    "primary": "#154212",
+                    "on-background": "#1c1b1b",
+                    "inverse-on-surface": "#f3f0ef",
+                    "surface-container-highest": "#e5e2e1",
+                    "primary-container": "#2d5a27",
+                    "surface-container-low": "#f6f3f2",
+                    "surface-bright": "#fcf9f8",
+                    "tertiary-fixed": "#e5e2e0",
+                    "tertiary-container": "#51504f",
+                    "on-primary-fixed-variant": "#23501e",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#f0eded",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1c1b1b",
+                    "on-tertiary-fixed-variant": "#474745",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#ffdbd0",
+                    "on-secondary-fixed": "#3a0a00",
+                    "on-tertiary-container": "#c5c2c1",
+                    "surface-variant": "#e5e2e1",
+                    "inverse-primary": "#a1d494",
+                    "outline-variant": "#c2c9bb",
+                    "secondary": "#ac3509",
+                    "background": "#fcf9f8",
+                    "secondary-fixed-dim": "#ffb59f",
+                    "on-tertiary-fixed": "#1b1c1b",
+                    "secondary-container": "#fe6f42",
+                    "surface-container-high": "#eae7e7",
+                    "tertiary": "#3a3938",
+                    "surface-dim": "#dcd9d9",
+                    "primary-fixed-dim": "#a1d494",
+                    "outline": "#72796e",
+                    "on-surface-variant": "#42493e",
+                    "on-primary-fixed": "#002201",
+                    "error": "#ba1a1a",
+                    "surface": "#fcf9f8",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#bcf0ae",
+                    "surface-tint": "#3b6934",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#c8c6c4",
+                    "on-secondary-fixed-variant": "#852300"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "12px",
+                    "2xl": "24px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "container-padding-desktop": "64px",
+                    "stack-lg": "32px",
+                    "gutter": "24px",
+                    "container-padding-mobile": "20px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "display-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #fcf9f8;
+            font-family: 'Inter', sans-serif;
+            color: #1c1b1b;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 40px -10px rgba(21, 66, 18, 0.05);
+        }
+        .ambient-shadow {
+            box-shadow: 0 10px 40px -10px rgba(21, 66, 18, 0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-tab {
+            border-bottom: 2px solid #154212;
+            color: #154212;
+            font-weight: 600;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0eded;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c2c9bb;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #72796e;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-on-surface/5 shadow-sm h-20">
+<div class="flex justify-between items-center w-full px-container-padding-desktop max-w-7xl mx-auto h-full">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Culina AI</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Discover</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Library</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Analytics</a>
+<a class="text-primary font-semibold border-b-2 border-primary pb-1 font-body-md text-body-md" href="#">Admin</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer p-2 rounded-full hover:bg-surface-container-low/50 transition-all">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<main class="mt-20 flex-grow w-full max-w-7xl mx-auto px-container-padding-desktop py-stack-lg space-y-stack-lg">
+<!-- Tab Navigation -->
+<div class="flex border-b border-outline-variant overflow-x-auto gap-stack-lg scrollbar-hide">
+<button class="active-tab px-unit py-stack-sm font-body-md text-body-md transition-all whitespace-nowrap">Tarifler</button>
+<button class="text-on-surface-variant hover:text-primary px-unit py-stack-sm font-body-md text-body-md transition-all whitespace-nowrap">Onay</button>
+<button class="text-on-surface-variant hover:text-primary px-unit py-stack-sm font-body-md text-body-md transition-all whitespace-nowrap">Kullanıcılar</button>
+<button class="text-on-surface-variant hover:text-primary px-unit py-stack-sm font-body-md text-body-md transition-all whitespace-nowrap">Malzemeler</button>
+<button class="text-on-surface-variant hover:text-primary px-unit py-stack-sm font-body-md text-body-md transition-all whitespace-nowrap">Kategoriler</button>
+</div>
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Total Recipes -->
+<div class="glass-card rounded-2xl p-stack-lg flex flex-col gap-2 transition-transform hover:scale-[1.02] duration-300">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider">Total Recipes</span>
+<span class="material-symbols-outlined text-primary">restaurant_menu</span>
+</div>
+<div class="text-headline-md font-bold text-on-surface">21,221</div>
+<div class="text-[12px] text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>12% last month</span>
+</div>
+</div>
+<!-- Pending Approvals -->
+<div class="glass-card rounded-2xl p-stack-lg flex flex-col gap-2 transition-transform hover:scale-[1.02] duration-300">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider">Pending Approvals</span>
+<span class="material-symbols-outlined text-secondary">pending_actions</span>
+</div>
+<div class="text-headline-md font-bold text-on-surface">0</div>
+<div class="text-[12px] text-on-surface-variant italic">All caught up</div>
+</div>
+<!-- Users -->
+<div class="glass-card rounded-2xl p-stack-lg flex flex-col gap-2 transition-transform hover:scale-[1.02] duration-300">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider">Users</span>
+<span class="material-symbols-outlined text-primary">group</span>
+</div>
+<div class="text-headline-md font-bold text-on-surface">2</div>
+<div class="text-[12px] text-on-surface-variant">System Admins</div>
+</div>
+<!-- Ingredients -->
+<div class="glass-card rounded-2xl p-stack-lg flex flex-col gap-2 transition-transform hover:scale-[1.02] duration-300">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider">Ingredients</span>
+<span class="material-symbols-outlined text-primary">nutrition</span>
+</div>
+<div class="text-headline-md font-bold text-on-surface">8,868</div>
+<div class="text-[12px] text-primary">Database synchronized</div>
+</div>
+</div>
+<!-- Main Content Split Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- Left Column: Add New Recipe -->
+<section class="lg:col-span-5 space-y-stack-md">
+<div class="flex items-center gap-2 px-unit">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Add New Recipe</h2>
+</div>
+<div class="glass-card rounded-2xl p-stack-lg space-y-6">
+<form class="space-y-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Tarif adı</label>
+<input class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all" placeholder="Recipe Name" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Açıklama</label>
+<textarea class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all" placeholder="Recipe Description" rows="3"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Süre (dk)</label>
+<input class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all" placeholder="30" type="number"/>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Porsiyon</label>
+<input class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all" placeholder="2" type="number"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Zorluk</label>
+<select class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all">
+<option>Easy</option>
+<option>Medium</option>
+<option>Hard</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant px-1">Kategori</label>
+<select class="w-full bg-surface-container-low/30 border-none border-b border-outline-variant focus:ring-0 focus:border-primary rounded-xl p-stack-sm text-body-md transition-all">
+<option>Seafood</option>
+<option>Dessert</option>
+<option>Main Course</option>
+<option>Snacks</option>
+</select>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-body-md text-body-md font-semibold py-4 rounded-xl ambient-shadow hover:bg-primary-container transition-all active:scale-95 duration-200 mt-4" type="submit">
+                            Add Recipe
+                        </button>
+</form>
+</div>
+</section>
+<!-- Right Column: All Recipes List -->
+<section class="lg:col-span-7 space-y-stack-md">
+<div class="flex items-center justify-between px-unit">
+<h2 class="font-headline-md text-headline-md text-on-surface">All Recipes</h2>
+<div class="relative max-w-xs w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container-low/50 border-none border-b border-outline-variant rounded-full pl-10 pr-4 py-2 text-body-md focus:ring-0 focus:border-primary transition-all" placeholder="Search recipes..." type="text"/>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Card 1 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 transition-all hover:translate-x-1">
+<div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Airfryer'da Hamsi Kızartma" class="w-full h-full object-cover" data-alt="A high-angle professional food photography shot of crispy fried anchovies served on a rustic plate with lemon wedges and fresh parsley. The lighting is bright and warm, emphasizing the golden texture of the fish. The background is a clean, minimalist kitchen setting with a soft cream color palette, reflecting a premium culinary aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU_1eBddVl5DHP4AHEvHeW06M4dWtfAdzzwiq_0FB4Ju8nYawQhO8QhryKQnZ_0CosTF2tttrdQ8o11c7qivzo-eP7WMC5R8Hvx2RAVYSqrnKx65b0e0pNrXL3rhPD9_oAEclFXOgAjaBesr7VtCTcOT9yAySyIW5XX37JIDX-ST34Gq_zji6SDA_mvZDBQmzn7qX5z5AB8NVchRiJXhja_ZGoRMia9haVX8gIjRXBazLi9mHSj7s8vk43qJ2yoVyBOpWaLp-r-Ei3"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Airfryer'da Hamsi Kızartma <span class="text-on-surface-variant font-normal text-sm">#21373</span></h3>
+<span class="px-2 py-0.5 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold rounded-full uppercase tracking-tighter">Approved</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mt-1">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">database</span> Seed</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> 20 dk</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">favorite</span> 0</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Gör">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary">visibility</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Düzenle">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary">edit</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Onayı Kaldır">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-secondary">undo</span>
+</button>
+<div class="flex-grow"></div>
+<button class="p-2 hover:bg-error-container/20 rounded-lg transition-colors group" title="Sil">
+<span class="material-symbols-outlined text-[20px] text-error">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 transition-all hover:translate-x-1">
+<div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Kadayıflı Çikolata" class="w-full h-full object-cover" data-alt="A close-up shot of decadent Dubai chocolate bars filled with vibrant green pistachio kadayif. The chocolate is glossy and dark, with the crunchy filling spilling out artfully. The setting is luxurious and minimalist, featuring a soft neutral background and warm, dramatic lighting that highlights the textures and high-end culinary appeal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1vp3tC2EHAwFTChtjU5V7wzshuOgI8xVxu-8kEqrh78Raeq0dX99QajEdG82lgbvVhpUXSFSKl4ijFBj7CcMD0we4hjQRRk9LZC9U5p75r6j0whRa-RB5EcEDoGpVWpb9vCwNBNlwhtSPHLF_uhrai9z6BDzAzYVg2FFve0pgz7WM41_3yM1nJYwLPhfh4xPtirq-4XKHT_g_HFsIG00_8sDk20v78bFb9mAi6600fTUI-JXLAXfwX0WQ7d6-iUx-lYYGz0qkFWiP"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">Kadayıflı Çikolata (Dubai Çikolatası) <span class="text-on-surface-variant font-normal text-sm">#21263</span></h3>
+<span class="px-2 py-0.5 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold rounded-full uppercase tracking-tighter">Approved</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mt-1">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">database</span> Seed</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> 65 dk</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">favorite</span> 0</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Gör">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary">visibility</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Düzenle">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary">edit</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors group" title="Onayı Kaldır">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-secondary">undo</span>
+</button>
+<div class="flex-grow"></div>
+<button class="p-2 hover:bg-error-container/20 rounded-lg transition-colors group" title="Sil">
+<span class="material-symbols-outlined text-[20px] text-error">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center pt-stack-md">
+<button class="text-primary font-semibold hover:underline flex items-center gap-1 font-body-md text-body-md">
+                        Load more recipes
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full bg-surface-container-low border-t border-on-surface/5">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-padding-desktop py-stack-lg w-full max-w-7xl mx-auto">
+<div class="flex flex-col gap-2 text-center md:text-left mb-6 md:mb-0">
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tighter">Culina AI</span>
+<span class="text-on-surface-variant font-label-caps text-label-caps">© 2024 Culina AI. The Discerning Visionary.</span>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors" href="#">Terms</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors" href="#">Support</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors" href="#">Sustainability</a>
+</div>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for buttons
+        document.querySelectorAll('button, a').forEach(elem => {
+            elem.addEventListener('mousedown', () => {
+                elem.classList.add('scale-95');
+            });
+            elem.addEventListener('mouseup', () => {
+                elem.classList.remove('scale-95');
+            });
+            elem.addEventListener('mouseleave', () => {
+                elem.classList.remove('scale-95');
+            });
+        });
+
+        // Tab switching logic (visual only)
+        const tabs = document.querySelectorAll('.flex.border-b button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('active-tab');
+                    t.classList.add('text-on-surface-variant');
+                });
+                tab.classList.add('active-tab');
+                tab.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

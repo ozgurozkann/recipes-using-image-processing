@@ -1,0 +1,336 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Fesleğenli Makarna | Culina AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dcd9d9",
+                        "on-secondary-fixed-variant": "#852300",
+                        "on-primary-container": "#9dd090",
+                        "surface": "#fcf9f8",
+                        "on-tertiary-fixed": "#1b1c1b",
+                        "secondary-container": "#fe6f42",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#a1d494",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-fixed": "#3a0a00",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#23501e",
+                        "tertiary": "#3a3938",
+                        "on-tertiary-container": "#c5c2c1",
+                        "inverse-surface": "#313030",
+                        "secondary-fixed-dim": "#ffb59f",
+                        "on-primary": "#ffffff",
+                        "primary": "#154212",
+                        "on-surface-variant": "#42493e",
+                        "primary-fixed-dim": "#a1d494",
+                        "tertiary-fixed-dim": "#c8c6c4",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary-fixed": "#ffdbd0",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container": "#f0eded",
+                        "outline-variant": "#c2c9bb",
+                        "tertiary-container": "#51504f",
+                        "on-primary-fixed": "#002201",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#3b6934",
+                        "on-background": "#1c1b1b",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-surface": "#1c1b1b",
+                        "outline": "#72796e",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#bcf0ae",
+                        "on-secondary-container": "#631800",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container-high": "#eae7e7",
+                        "secondary": "#ac3509",
+                        "primary-container": "#2d5a27",
+                        "on-tertiary-fixed-variant": "#474745",
+                        "tertiary-fixed": "#e5e2e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "24px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "container-padding-mobile": "20px",
+                        "container-padding-desktop": "64px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #fcf9f8;
+            color: #1c1b1b;
+            scroll-behavior: smooth;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .ambient-shadow {
+            box-shadow: 0 10px 40px rgba(21, 66, 18, 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="antialiased">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl border-b border-on-surface/5 dark:border-on-surface-variant/10 shadow-sm h-20">
+<nav class="flex justify-between items-center w-full px-container-padding-desktop max-w-7xl mx-auto h-full">
+<div class="flex items-center gap-stack-lg">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Culina AI</span>
+<div class="hidden md:flex gap-stack-md ml-stack-lg">
+<a class="font-body-md text-body-md text-primary dark:text-primary-fixed-dim font-semibold border-b-2 border-primary dark:border-primary-fixed-dim pb-1" href="#">Discover</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Library</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-tertiary-container hover:text-primary transition-colors" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="p-2 hover:bg-surface-container-low/50 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low/50 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</button>
+</div>
+</nav>
+</header>
+<main class="pt-20 pb-stack-lg min-h-screen">
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-container-padding-mobile md:px-container-padding-desktop py-stack-lg">
+<div class="relative overflow-hidden rounded-2xl h-[500px] ambient-shadow">
+
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-stack-lg md:p-12 w-full">
+<div class="flex flex-wrap gap-2 mb-stack-md">
+<span class="px-4 py-1 glass-effect rounded-full font-label-caps text-label-caps text-on-background">Kolay</span>
+<span class="px-4 py-1 glass-effect rounded-full font-label-caps text-label-caps text-on-background flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> 30 dk
+                        </span>
+<span class="px-4 py-1 glass-effect rounded-full font-label-caps text-label-caps text-on-background flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">group</span> 2 kişi
+                        </span>
+</div>
+<h1 class="font-display-lg text-display-lg text-white mb-stack-md">Fesleğenli Makarna</h1>
+<div class="flex gap-stack-md">
+<button class="flex items-center gap-2 bg-secondary text-white px-8 py-4 rounded-full font-label-caps text-label-caps hover:brightness-110 transition-all active:scale-95 shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">favorite</span> FAVORİLE
+                        </button>
+<button class="flex items-center gap-2 glass-effect text-on-background px-8 py-4 rounded-full font-label-caps text-label-caps hover:bg-white/90 transition-all active:scale-95">
+<span class="material-symbols-outlined">bookmark</span> KAYDET
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Content Section -->
+<section class="max-w-7xl mx-auto px-container-padding-mobile md:px-container-padding-desktop grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Ingredients -->
+<div class="lg:col-span-8">
+<div class="bg-white rounded-2xl p-stack-lg ambient-shadow border border-black/5">
+<div class="flex items-center gap-2 mb-stack-lg">
+<span class="material-symbols-outlined text-primary text-[28px]">shopping_basket</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Malzemeler</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Ingredient Card -->
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Makarna</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">0.50 paket</span>
+</div>
+</div>
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Bağ Taze Fesleğen</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">1 adet</span>
+</div>
+</div>
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Sarımsak</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">2 diş</span>
+</div>
+</div>
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Zeytinyağı</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">3 yemek kaşığı</span>
+</div>
+</div>
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Tuz</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">1 tutam</span>
+</div>
+</div>
+<div class="flex items-center p-stack-md bg-surface-container-low rounded-xl border border-black/[0.03] transition-all hover:bg-white hover:shadow-sm">
+<div class="w-3 h-3 rounded-full bg-secondary mr-stack-md"></div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Karabiber</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">1 tutam</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Preparation Section -->
+<div class="mt-stack-lg bg-white rounded-2xl p-stack-lg ambient-shadow border border-black/5">
+<div class="flex items-center gap-2 mb-stack-lg">
+<span class="material-symbols-outlined text-primary text-[28px]">restaurant_menu</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Hazırlanışı</h2>
+</div>
+<div class="space-y-stack-md">
+<div class="flex gap-stack-md">
+<span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold">1</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Makarnayı bol tuzlu suda, paketin üzerindeki talimatlara göre al dente (hafif diri) kıvamda haşlayın.</p>
+</div>
+<div class="flex gap-stack-md">
+<span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold">2</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Fesleğen yapraklarını, sarımsağı ve zeytinyağını bir mutfak robotunda pürüzsüz olana kadar çekin.</p>
+</div>
+<div class="flex gap-stack-md">
+<span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold">3</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Makarna suyundan bir kepçe ayırın, ardından makarnayı süzün ve sosla birlikte tavada hızlıca karıştırın.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Insights -->
+<aside class="lg:col-span-4 space-y-stack-lg">
+<div class="bg-surface-container-high rounded-2xl p-stack-lg ambient-shadow border border-black/5 overflow-hidden relative">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-stack-md">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: &quot;FILL&quot; 1;">auto_awesome</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">AI Analizi</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg leading-relaxed">Bu tarif, taze fesleğen sayesinde yüksek antioksidan içeriğine sahiptir ve sağlıklı yağlar bakımından zengindir.</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center p-3 bg-white/50 rounded-xl">
+<span class="font-label-caps text-label-caps text-on-surface">Kalori</span>
+<span class="font-body-md text-body-md font-bold text-primary">320 kcal</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-white/50 rounded-xl">
+<span class="font-label-caps text-label-caps text-on-surface">Protein</span>
+<span class="font-body-md text-body-md font-bold text-primary">12g</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-white/50 rounded-xl">
+<span class="font-label-caps text-label-caps text-on-surface">Yağ</span>
+<span class="font-body-md text-body-md font-bold text-primary">15g</span>
+</div>
+</div>
+<div class="mt-stack-lg flex flex-wrap gap-2">
+<span class="bg-secondary-fixed text-on-secondary-container px-3 py-1 rounded-full text-label-caps font-label-caps">Vejetaryen</span>
+<span class="bg-secondary-fixed text-on-secondary-container px-3 py-1 rounded-full text-label-caps font-label-caps">Akdeniz Diyeti</span>
+</div>
+</div>
+</div>
+<!-- Related Recipe Card -->
+<div class="rounded-2xl overflow-hidden group ambient-shadow bg-white cursor-pointer transition-transform hover:-translate-y-1">
+<div class="h-40 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform group-hover:scale-105" data-alt="A macro photography shot of a fresh, colorful Mediterranean salad with grilled vegetables and herbs, shot in a high-end gourmet culinary style. The lighting is soft and natural, emphasizing the organic textures of the produce against a minimalist cream-colored ceramic plate. The overall mood is sophisticated, healthy, and premium minimalist." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0VaTczIVX2Ftw077B7wpKKBKkYQ0SR6eq3Mfsqfk9dWzcKlAvK5_Qjta4j65hDen7fIC6U5U4E2NS0332Zr1bepmFFSDIY4wx0EfH7i10EowlWAESNlxyeh_zduzN2h-nkor2XZkzIp9GZZq6Obr9KGgT-P36zsMmIKTjBWCjLEDbwXbcHYbsI_U8-sHev7xYQtgrEeZ_LVLkGczS3CnygYFkt0KfiHb1NTF8lHdkuc_eDV6RtPKaCpuY3jXwEgKkBseoTUJbRs76">
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all"></div>
+</div>
+<div class="p-stack-md">
+<span class="font-label-caps text-label-caps text-secondary uppercase mb-1 block">Benzer Tarif</span>
+<h4 class="font-headline-md text-headline-md text-on-surface text-lg">Köz Sebzeli Salata</h4>
+<div class="flex items-center gap-stack-sm mt-2 text-on-surface-variant font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-sm">schedule</span> 15 dk
+                        </div>
+</div>
+</div>
+</aside>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full bg-surface-container-low dark:bg-surface-dim border-t border-on-surface/5 dark:border-on-surface-variant/5 mt-stack-lg">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-padding-desktop py-stack-lg w-full max-w-7xl mx-auto gap-stack-md">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="font-headline-md text-headline-md text-primary dark:text-primary-fixed-dim font-bold">Culina AI</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant">© 2024 Culina AI. The Discerning Visionary.</p>
+</div>
+<div class="flex gap-stack-lg">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Terms</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Sustainability</a>
+</div>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                if(this.innerText.includes('FAVORİLE')) {
+                    const icon = this.querySelector('.material-symbols-outlined');
+                    if(icon.style.fontVariationSettings.includes("'FILL' 1")) {
+                        icon.style.fontVariationSettings = "'FILL' 0";
+                        this.classList.remove('bg-secondary');
+                        this.classList.add('bg-on-surface-variant');
+                    } else {
+                        icon.style.fontVariationSettings = "'FILL' 1";
+                        this.classList.remove('bg-on-surface-variant');
+                        this.classList.add('bg-secondary');
+                    }
+                }
+            });
+        });
+
+        // Simple scroll parallax for hero
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const heroImage = document.querySelector('section img');
+            if(heroImage) {
+                heroImage.style.transform = `translateY(${scrolled * 0.15}px)`;
+            }
+        });
+    </script>
+
+
+</body></html>

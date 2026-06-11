@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
-import Spinner from "../components/Spinner";
 import { toast, toastError } from "../components/Toast";
 
 type Ingredient = { id: number; name: string; unit_type: string; category_id: number | null };
 type Category = { id: number; name: string };
 
 const STEPS = ["Temel Bilgiler", "Malzemeler", "Talimatlar"];
+const inputClass = "w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary";
 
 export default function AddRecipePage() {
   const navigate = useNavigate();
@@ -71,233 +71,268 @@ export default function AddRecipePage() {
   const selectedCount = Object.keys(selected).length;
 
   return (
-    <div>
-      <div className="page-hero">
-        <h1 className="page-title">➕ Tarif <span>Ekle</span></h1>
-        <p className="page-sub">Kendi tarifini topluluğa paylaş.</p>
-      </div>
+    <div className="pb-20">
+      <main className="pt-8 max-w-5xl mx-auto px-5 md:px-16">
 
-      {/* Step indicator */}
-      <div className="steps" style={{ marginBottom: 24 }}>
-        {STEPS.map((s, i) => (
-          <div key={s} className="step" style={{ display: "flex", alignItems: "center" }}>
-            <div className={`step${step === i ? " active" : ""}${step > i ? " done" : ""}`}
-              style={{ display: "flex", alignItems: "center", gap: 8, cursor: i < step ? "pointer" : "default" }}
-              onClick={() => i < step && setStep(i)}>
-              <div className="step-num">{step > i ? "✓" : i + 1}</div>
-              <span className="step-label" style={{ display: "block" }}>{s}</span>
-            </div>
-            {i < STEPS.length - 1 && <div className="step-line" style={{ flex: 1, height: 2, margin: "0 10px", background: step > i ? "var(--ok)" : "var(--border)", borderRadius: 1 }} />}
-          </div>
-        ))}
-      </div>
+        {/* Hero */}
+        <section className="mb-8">
+          <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">Katkıda Bulun</span>
+          <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight mb-2">
+            Tarif Ekle
+          </h1>
+          <p className="text-on-surface-variant text-body-lg">Kendi tarifini topluluğa paylaş.</p>
+        </section>
 
-      {/* ── Step 0: Basic Info ── */}
-      {step === 0 && (
-        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", animation: "fadeUp 0.3s ease both" }}>
-          <div className="card">
-            <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Temel Bilgiler</h3>
-
-            <div className="field" style={{ marginTop: 0 }}>
-              <label className="label">Tarif Adı *</label>
-              <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Örn: Tavuklu Sebze Sote" />
-            </div>
-
-            <div className="field">
-              <label className="label">Açıklama</label>
-              <textarea className="input" value={description} onChange={(e) => setDescription(e.target.value)}
-                rows={3} placeholder="Tarif hakkında kısa bilgi…" />
-            </div>
-
-            <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 0 }}>
-              <div className="field" style={{ marginTop: 14 }}>
-                <label className="label">Süre (dk)</label>
-                <input className="input" type="number" min={1} value={cooking_time} onChange={(e) => setCookingTime(Number(e.target.value))} />
+        {/* Step Indicator */}
+        <div className="flex items-center mb-8 bg-white rounded-2xl border border-outline-variant/30 p-5 ambient-shadow">
+          {STEPS.map((s, i) => (
+            <div key={s} className="flex items-center flex-1">
+              <div
+                className={`flex items-center gap-3 cursor-pointer transition-all ${i < step ? "cursor-pointer" : "cursor-default"}`}
+                onClick={() => i < step && setStep(i)}
+              >
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors ${step > i ? "bg-primary text-white" : step === i ? "bg-primary text-white ring-4 ring-primary/20" : "bg-surface-container-high text-on-surface-variant"}`}>
+                  {step > i ? <span className="material-symbols-outlined text-sm">check</span> : i + 1}
+                </div>
+                <span className={`text-sm font-semibold hidden sm:block ${step >= i ? "text-on-surface" : "text-on-surface-variant"}`}>{s}</span>
               </div>
-              <div className="field" style={{ marginTop: 14 }}>
-                <label className="label">Porsiyon</label>
-                <input className="input" type="number" min={1} value={serving_count} onChange={(e) => setServingCount(Number(e.target.value))} />
+              {i < STEPS.length - 1 && (
+                <div className={`flex-1 h-0.5 mx-4 rounded-full transition-colors ${step > i ? "bg-primary" : "bg-outline-variant/40"}`} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Step 0: Basic Info */}
+        {step === 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow space-y-4">
+              <h3 className="font-bold text-on-surface">Temel Bilgiler</h3>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Tarif Adı *</label>
+                <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Örn: Tavuklu Sebze Sote" autoFocus />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Açıklama</label>
+                <textarea className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Tarif hakkında kısa bilgi…" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Süre (dk)</label>
+                  <input className={inputClass} type="number" min={1} value={cooking_time} onChange={(e) => setCookingTime(Number(e.target.value))} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Porsiyon</label>
+                  <input className={inputClass} type="number" min={1} value={serving_count} onChange={(e) => setServingCount(Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Zorluk</label>
+                  <select className={inputClass} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                    <option value="easy">Kolay</option><option value="medium">Orta</option><option value="hard">Zor</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Kategori</label>
+                  <select className={inputClass} value={category_id ?? ""} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}>
+                    <option value="">— Seç —</option>
+                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Görsel URL (opsiyonel)</label>
+                <input className={inputClass} value={image_url} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
               </div>
             </div>
 
-            <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 0 }}>
-              <div className="field" style={{ marginTop: 14 }}>
-                <label className="label">Zorluk</label>
-                <select className="input" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                  <option value="easy">Kolay</option>
-                  <option value="medium">Orta</option>
-                  <option value="hard">Zor</option>
-                </select>
+            {/* Summary */}
+            <div className="glass-card rounded-2xl p-6 ambient-shadow flex flex-col justify-between">
+              <div>
+                <h3 className="font-bold text-on-surface mb-4">Özet</h3>
+                <div className="space-y-3 text-sm">
+                  {[
+                    { label: "Başlık", value: title || "—" },
+                    { label: "Süre", value: `${cooking_time} dk` },
+                    { label: "Porsiyon", value: `${serving_count} kişi` },
+                    { label: "Zorluk", value: { easy: "Kolay", medium: "Orta", hard: "Zor" }[difficulty] || difficulty },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between py-2 border-b border-outline-variant/20">
+                      <span className="text-on-surface-variant font-medium">{row.label}</span>
+                      <span className="font-semibold text-primary">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="field" style={{ marginTop: 14 }}>
-                <label className="label">Kategori</label>
-                <select className="input" value={category_id ?? ""} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}>
-                  <option value="">— Seç —</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="field">
-              <label className="label">Görsel URL (opsiyonel)</label>
-              <input className="input" value={image_url} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-            </div>
-          </div>
-
-          <div className="card" style={{ background: "linear-gradient(135deg, var(--primary-subtle), var(--ok-subtle))", borderColor: "rgba(124,92,255,0.2)" }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 14 }}>📋 Özet</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: "var(--muted)" }}>
-              <div><strong style={{ color: "var(--text)" }}>Başlık:</strong> {title || "—"}</div>
-              <div><strong style={{ color: "var(--text)" }}>Süre:</strong> {cooking_time} dk</div>
-              <div><strong style={{ color: "var(--text)" }}>Porsiyon:</strong> {serving_count} kişi</div>
-              <div><strong style={{ color: "var(--text)" }}>Zorluk:</strong> {{easy:"Kolay",medium:"Orta",hard:"Zor"}[difficulty]}</div>
-            </div>
-            <div style={{ marginTop: 24 }}>
-              <button className="btn primary btn-lg" onClick={() => setStep(1)} disabled={!title.trim()}
-                style={{ width: "100%", justifyContent: "center" }}>
-                Malzeme Seç →
+              <button
+                className="w-full mt-8 bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                onClick={() => setStep(1)}
+                disabled={!title.trim()}
+              >
+                Malzeme Seç <span className="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Step 1: Ingredients ── */}
-      {step === 1 && (
-        <div className="grid" style={{ gridTemplateColumns: "1fr 380px", animation: "fadeUp 0.3s ease both" }}>
-          <div className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 700, margin: 0 }}>Malzeme Seç</h3>
-              {selectedCount > 0 && <span className="badge primary">{selectedCount} seçili</span>}
-            </div>
-
-            <div style={{ position: "relative", marginBottom: 14 }}>
-              <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>🔍</span>
-              <input className="input" placeholder="Malzeme ara…" value={ingSearch}
-                onChange={(e) => setIngSearch(e.target.value)} style={{ paddingLeft: 34 }} />
-            </div>
-
-            <div style={{ maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
-              {categories.map((c) => {
-                const list = grouped.get(c.id) || [];
-                if (!list.length) return null;
-                return (
-                  <div key={c.id} style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase",
-                      letterSpacing: 0.8, marginBottom: 8 }}>{c.name}</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 6 }}>
-                      {list.map((i) => {
-                        const picked = selected[i.id];
-                        return (
-                          <div key={i.id} className={`ing-card${picked ? " selected" : ""}`} onClick={() => toggleIng(i)}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <input type="checkbox" checked={!!picked} readOnly style={{ pointerEvents: "none", accentColor: "var(--primary)" }} />
-                              <span style={{ fontSize: 13, fontWeight: 500 }}>{i.name}</span>
-                            </div>
-                            {picked && (
-                              <div style={{ display: "flex", gap: 4, marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
-                                <input className="input" type="number" min={0} value={picked.quantity}
-                                  onChange={(e) => setSelected((s) => ({ ...s, [i.id]: { ...s[i.id], quantity: Number(e.target.value) } }))}
-                                  style={{ flex: 1, padding: "4px 6px", fontSize: 12 }} />
-                                <input className="input" value={picked.unit}
-                                  onChange={(e) => setSelected((s) => ({ ...s, [i.id]: { ...s[i.id], unit: e.target.value } }))}
-                                  style={{ width: 60, padding: "4px 6px", fontSize: 12 }} />
+        {/* Step 1: Ingredients */}
+        {step === 1 && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-8 bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-on-surface">Malzeme Seç</h3>
+                {selectedCount > 0 && (
+                  <span className="px-3 py-1 bg-primary-fixed/50 text-primary text-xs font-bold rounded-full">{selectedCount} seçili</span>
+                )}
+              </div>
+              <div className="relative mb-4">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+                <input className={`${inputClass} pl-9`} placeholder="Malzeme ara…" value={ingSearch} onChange={(e) => setIngSearch(e.target.value)} />
+              </div>
+              <div className="max-h-[50vh] overflow-y-auto custom-scrollbar space-y-4 pr-1">
+                {categories.map((c) => {
+                  const list = grouped.get(c.id) || [];
+                  if (!list.length) return null;
+                  return (
+                    <div key={c.id}>
+                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">{c.name}</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {list.map((i) => {
+                          const picked = selected[i.id];
+                          return (
+                            <div key={i.id}
+                              className={`p-3 rounded-xl border cursor-pointer transition-all ${picked ? "border-primary bg-primary-fixed/30" : "border-outline-variant/50 hover:border-primary/30 bg-surface-container-low"}`}
+                              onClick={() => toggleIng(i)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center ${picked ? "bg-primary border-primary" : "border-outline-variant"}`}>
+                                  {picked && <span className="material-symbols-outlined text-white" style={{ fontSize: 10 }}>check</span>}
+                                </div>
+                                <span className="text-xs font-medium text-on-surface truncate">{i.name}</span>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                              {picked && (
+                                <div className="grid grid-cols-2 gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+                                  <input type="number" min={0} value={picked.quantity}
+                                    onChange={(e) => setSelected((s) => ({ ...s, [i.id]: { ...s[i.id], quantity: Number(e.target.value) } }))}
+                                    className="border border-outline-variant/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary" />
+                                  <input value={picked.unit}
+                                    onChange={(e) => setSelected((s) => ({ ...s, [i.id]: { ...s[i.id], unit: e.target.value } }))}
+                                    className="border border-outline-variant/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="md:col-span-4 flex flex-col gap-4">
+              <div className="bg-white rounded-2xl border border-outline-variant/30 p-5 ambient-shadow flex-grow">
+                <h3 className="font-bold text-on-surface mb-3">Seçilen Malzemeler</h3>
+                {selectedCount === 0 ? (
+                  <p className="text-on-surface-variant text-sm">Henüz seçilmedi.</p>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                    {Object.entries(selected).map(([id, v]) => {
+                      const ing = ingredients.find((x) => x.id === Number(id));
+                      return (
+                        <div key={id} className="flex justify-between items-center px-3 py-2 bg-surface-container-low rounded-lg text-xs">
+                          <span className="font-medium text-on-surface">{ing?.name}</span>
+                          <span className="text-on-surface-variant">{v.quantity} {v.unit}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-semibold hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1" onClick={() => setStep(0)}>
+                  <span className="material-symbols-outlined text-sm">arrow_back</span>Geri
+                </button>
+                <button className="flex-2 bg-primary text-white py-3 px-6 rounded-xl font-semibold text-sm flex items-center justify-center gap-1 hover:bg-primary-container transition-colors" onClick={() => setStep(2)}>
+                  Talimatlar <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Selected panel */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div className="card" style={{ flex: 1 }}>
-              <h3 style={{ fontWeight: 700, marginBottom: 12 }}>Seçilen Malzemeler</h3>
-              {selectedCount === 0 ? (
-                <div style={{ color: "var(--muted)", fontSize: 14 }}>Henüz seçilmedi.</div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {Object.entries(selected).map(([id, v]) => {
-                    const ing = ingredients.find((x) => x.id === Number(id));
-                    return (
-                      <div key={id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "6px 10px", borderRadius: "var(--radius-sm)", background: "var(--panel2)", fontSize: 13 }}>
-                        <span style={{ fontWeight: 500 }}>{ing?.name}</span>
-                        <span style={{ color: "var(--muted)" }}>{v.quantity} {v.unit}</span>
+        {/* Step 2: Instructions */}
+        {step === 2 && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-8 bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow">
+              <h3 className="font-bold text-on-surface mb-2">Hazırlanış Adımları</h3>
+              <p className="text-on-surface-variant text-sm mb-4">Her adımı ayrı satıra yaz. Boş satırlar otomatik temizlenir.</p>
+              <textarea
+                className={`${inputClass} min-h-[200px]`}
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                rows={10}
+                placeholder={"1. Soğanı doğrayıp kavurun.\n2. Tavuğu ekleyin, mühürleyin.\n3. Baharatları ekleyin…"}
+              />
+              {instructions && (
+                <div className="mt-6">
+                  <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Önizleme</p>
+                  <div className="space-y-3">
+                    {instructions.split("\n").filter(Boolean).map((s, i) => (
+                      <div key={i} className="flex gap-4 items-start">
+                        <div className="w-7 h-7 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-xs flex-shrink-0">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm text-on-surface-variant leading-relaxed pt-0.5">{s}</p>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn ghost" onClick={() => setStep(0)} style={{ flex: 1, justifyContent: "center" }}>← Geri</button>
-              <button className="btn primary" onClick={() => setStep(2)} style={{ flex: 2, justifyContent: "center" }}>
-                Talimatlar →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 2: Instructions ── */}
-      {step === 2 && (
-        <div className="grid" style={{ gridTemplateColumns: "1fr 360px", animation: "fadeUp 0.3s ease both" }}>
-          <div className="card">
-            <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Hazırlanış Adımları</h3>
-            <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 16 }}>
-              Her adımı ayrı satıra yaz. Boş satırlar otomatik temizlenir.
-            </p>
-            <textarea className="input" value={instructions} onChange={(e) => setInstructions(e.target.value)}
-              rows={10} placeholder={"1. Soğanı doğrayıp kavurun.\n2. Tavuğu ekleyin, mühürleyin.\n3. Baharatları ekleyin…"} />
-
-            {instructions && (
-              <div style={{ marginTop: 16 }}>
-                <div className="section-title">Önizleme</div>
-                {instructions.split("\n").filter(Boolean).map((s, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", marginTop: 8,
-                    animation: `fadeUp 0.3s ${i * 0.05}s ease both` }}>
-                    <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                      background: "var(--primary)", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>
-                      {i + 1}
+            <div className="md:col-span-4 flex flex-col gap-4">
+              <div className="glass-card rounded-2xl p-5 ambient-shadow">
+                <h3 className="font-bold text-on-surface mb-4">Tarif Özeti</h3>
+                <div className="space-y-2 text-sm">
+                  {[
+                    { label: "Başlık", value: title },
+                    { label: "Süre", value: `${cooking_time} dk` },
+                    { label: "Porsiyon", value: `${serving_count} kişi` },
+                    { label: "Malzeme", value: `${selectedCount} adet` },
+                    { label: "Adım", value: `${instructions.split("\n").filter(Boolean).length} adet` },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between py-1.5 border-b border-outline-variant/20">
+                      <span className="text-on-surface-variant">{row.label}</span>
+                      <span className="font-semibold text-primary">{row.value}</span>
                     </div>
-                    <p style={{ margin: 0, fontSize: 14, paddingTop: 4, lineHeight: 1.6 }}>{s}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Summary & submit */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div className="card" style={{ background: "var(--primary-subtle)", borderColor: "rgba(124,92,255,0.2)" }}>
-              <h3 style={{ fontWeight: 700, marginBottom: 14 }}>Tarif Özeti</h3>
-              <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 2 }}>
-                <div><strong style={{ color: "var(--text)" }}>Başlık:</strong> {title}</div>
-                <div><strong style={{ color: "var(--text)" }}>Süre:</strong> {cooking_time} dk</div>
-                <div><strong style={{ color: "var(--text)" }}>Porsiyon:</strong> {serving_count} kişi</div>
-                <div><strong style={{ color: "var(--text)" }}>Malzeme:</strong> {selectedCount} adet</div>
-                <div><strong style={{ color: "var(--text)" }}>Adım:</strong> {instructions.split("\n").filter(Boolean).length} adet</div>
+              <div className="flex gap-3">
+                <button className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-semibold hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1" onClick={() => setStep(1)}>
+                  <span className="material-symbols-outlined text-sm">arrow_back</span>Geri
+                </button>
+                <button
+                  className="flex-2 bg-primary text-white py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary-container transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                  onClick={submit}
+                  disabled={loading}
+                >
+                  {loading ? <><span className="spinner" />Kaydediliyor…</> : <><span className="material-symbols-outlined text-sm">publish</span>Yayınla</>}
+                </button>
               </div>
             </div>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn ghost" onClick={() => setStep(1)} style={{ flex: 1, justifyContent: "center" }}>← Geri</button>
-              <button className="btn primary btn-lg" onClick={submit} disabled={loading}
-                style={{ flex: 2, justifyContent: "center" }}>
-                {loading ? <><Spinner size="sm" /> Kaydediliyor…</> : "✓ Yayınla"}
-              </button>
-            </div>
           </div>
+        )}
+      </main>
+
+      <footer className="culina-footer mt-12">
+        <div className="culina-footer-inner">
+          <span className="font-bold text-primary">Culina AI</span>
+          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Culina AI.</p>
         </div>
-      )}
+      </footer>
     </div>
   );
 }

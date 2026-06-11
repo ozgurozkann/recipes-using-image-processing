@@ -22,6 +22,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database import SessionLocal
 from app.models import Ingredient, IngredientCategory, Recipe, RecipeCategory, RecipeIngredient
+from app.utils.ingredient_names import clean_ingredient_name
 
 # ── Birim tanımları ───────────────────────────────────────────────────────────
 
@@ -116,9 +117,7 @@ def parse_ingredient_line(line: str) -> tuple[str, float, str] | None:
     qty *= mult
 
     remaining = FILLER_RE.sub("", remaining)
-    name = remaining.strip(" ,.:;-").lower()
-    name = unicodedata.normalize("NFC", name)
-    name = re.sub(r"\s+", " ", name).strip()
+    name = clean_ingredient_name(unicodedata.normalize("NFC", remaining))
     if not name or len(name) < 2:
         return None
 

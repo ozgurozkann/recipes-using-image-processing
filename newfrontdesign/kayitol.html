@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Culina AI - Kayıt Ol</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#154212",
+                        "on-tertiary-container": "#c5c2c1",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-container": "#9dd090",
+                        "surface-variant": "#e5e2e1",
+                        "primary-container": "#2d5a27",
+                        "inverse-primary": "#a1d494",
+                        "on-surface": "#1c1b1b",
+                        "tertiary-fixed": "#e5e2e0",
+                        "surface-bright": "#fcf9f8",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface-container-highest": "#e5e2e1",
+                        "secondary-fixed-dim": "#ffb59f",
+                        "on-tertiary-fixed-variant": "#474745",
+                        "surface-container-high": "#eae7e7",
+                        "surface": "#fcf9f8",
+                        "error": "#ba1a1a",
+                        "outline": "#72796e",
+                        "on-background": "#1c1b1b",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#51504f",
+                        "on-secondary-fixed-variant": "#852300",
+                        "secondary-container": "#fe6f42",
+                        "primary-fixed-dim": "#a1d494",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#3b6934",
+                        "outline-variant": "#c2c9bb",
+                        "surface-container": "#f0eded",
+                        "on-secondary-fixed": "#3a0a00",
+                        "on-error-container": "#93000a",
+                        "background": "#fcf9f8",
+                        "on-secondary-container": "#631800",
+                        "surface-container-low": "#f6f3f2",
+                        "on-error": "#ffffff",
+                        "secondary": "#ac3509",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#23501e",
+                        "inverse-surface": "#313030",
+                        "on-surface-variant": "#42493e",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#c8c6c4",
+                        "tertiary": "#3a3938",
+                        "on-primary-fixed": "#002201",
+                        "on-tertiary-fixed": "#1b1c1b",
+                        "primary-fixed": "#bcf0ae",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.25rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "stack-lg": "32px",
+                        "container-padding-mobile": "20px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "container-padding-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .ambient-shadow {
+            box-shadow: 0 20px 40px -10px rgba(21, 66, 18, 0.08);
+        }
+        .quiet-input {
+            border: none;
+            border-bottom: 1px solid #E5E2E1;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .quiet-input:focus {
+            outline: none;
+            border-bottom-color: #154212;
+            box-shadow: 0 1px 0 0 #154212;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface overflow-x-hidden min-h-screen flex flex-col">
+<!-- Header Navigation (Simplified for Transactional Page) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-gutter py-4 max-w-screen-2xl mx-auto">
+<div class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Culina AI</div>
+<a class="text-label-caps font-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">
+            YARDIM
+        </a>
+</header>
+<!-- Main Content Container -->
+<main class="flex-grow flex items-center justify-center px-container-padding-mobile md:px-container-padding-desktop py-stack-lg mt-16">
+<!-- Registration Card Layout -->
+<div class="glass-card ambient-shadow rounded-xl overflow-hidden flex flex-col md:flex-row w-full max-w-5xl h-full min-h-[600px]">
+<!-- Visual Section (Left) -->
+<div class="hidden md:flex w-1/2 relative bg-surface-container-low overflow-hidden items-center justify-center p-stack-lg">
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+
+</div>
+<div class="relative z-10 w-full aspect-square max-w-md rounded-full overflow-hidden border-[12px] border-white/50 shadow-2xl">
+<img class="w-full h-full object-cover scale-110 hover:scale-100 transition-transform duration-1000 ease-out" data-alt="A premium close-up of a vibrant, gourmet salad plate with microgreens and roasted root vegetables. The lighting is soft and cinematic, with a warm morning glow reflecting off a marble tabletop. The aesthetic is clean, minimalist, and upscale, perfectly matching a high-end culinary AI brand's visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5M0SxlzuY9Znl63izFEEG6x9SFDc7wtSYBFGgQ9np0RzFRN4H93gYzGb-rEVYxIvsnwOGDDNCOL2OjvQmlD6vV52QjbcE6ltHnMB_sQBIHYb_7PAF_bQZtmq7pT_HB3qIXybx9mnOe445OjeyLZ5Of4IokN3U3KgDPxcREzKiT_RyvWnsu8We8gyDilGJHN1oqnFrB4UxNcNw6NVcdn0BvyC-Fu1ZFsZBrEU6ozNsvzVHvn-Ma_TMBmzUcsNJ-Rl0D-WWdec-21fV"/>
+</div>
+<!-- Floating AI Chip Example -->
+<div class="absolute bottom-12 right-12 bg-secondary-fixed/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/20 transform rotate-3">
+<span class="font-label-caps text-label-caps text-on-secondary-container flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                        GASTRONOMİ REHBERİNİZ
+                    </span>
+</div>
+</div>
+<!-- Form Section (Right) -->
+<div class="w-full md:w-1/2 p-stack-lg md:p-16 flex flex-col justify-center">
+<div class="max-w-sm mx-auto w-full">
+<header class="mb-stack-lg">
+<h1 class="font-display-lg text-headline-md md:text-display-lg text-primary mb-2">Culina AI Dünyasına Katıl</h1>
+<p class="text-on-surface-variant font-body-md">Yapay zeka destekli gastronomi yolculuğuna bugün başla.</p>
+</header>
+<form class="space-y-6" onsubmit="return false;">
+<!-- Full Name -->
+<div class="group">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors" for="full_name">AD SOYAD</label>
+<input class="w-full py-3 quiet-input text-body-md placeholder:text-outline-variant/50" id="full_name" name="full_name" placeholder="Gurme İsmi" type="text"/>
+</div>
+<!-- Email -->
+<div class="group">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors" for="email">E-POSTA</label>
+<input class="w-full py-3 quiet-input text-body-md placeholder:text-outline-variant/50" id="email" name="email" placeholder="isim@ornek.com" type="email"/>
+</div>
+<!-- Password -->
+<div class="group relative">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors" for="password">ŞİFRE</label>
+<input class="w-full py-3 quiet-input text-body-md placeholder:text-outline-variant/50 pr-10" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-0 bottom-3 text-on-surface-variant/50 hover:text-primary" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<!-- Primary CTA -->
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-headline-md text-body-md shadow-lg shadow-primary/20 hover:bg-primary-container active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2">
+                            Kayıt Ol
+                            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="relative my-stack-lg">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/30"></div>
+</div>
+<div class="relative flex justify-center text-label-caps">
+<span class="bg-white/0 px-4 text-on-surface-variant/60 font-label-caps uppercase tracking-widest">YA DA DEVAM ET</span>
+</div>
+</div>
+<!-- Social Auth -->
+<div class="grid grid-cols-2 gap-stack-md">
+<button class="flex items-center justify-center gap-3 border border-outline-variant/30 py-3 rounded-lg hover:bg-surface-container-low transition-colors duration-200 active:scale-95">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+<span class="text-label-caps font-label-caps">GOOGLE</span>
+</button>
+<button class="flex items-center justify-center gap-3 border border-outline-variant/30 py-3 rounded-lg hover:bg-surface-container-low transition-colors duration-200 active:scale-95">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M17.05 20.28c-.96 0-2.04-.6-3.23-.6-1.16 0-2.22.58-3.12.58-1.32 0-3.13-1.42-4.04-3.03-1.2-2.14-1.28-5.36.21-7.23.75-.95 1.76-1.53 2.77-1.53.94 0 1.77.53 2.45.53.64 0 1.63-.58 2.76-.58 1.06 0 2.27.53 3.01 1.58-2.67 1.41-2.24 5.17.41 6.55-.58 1.45-1.42 2.72-2.22 3.73zM12.03 7.25c-.23-1.6 1.05-3.13 2.49-3.25.26 1.75-1.4 3.25-2.49 3.25z"></path>
+</svg>
+<span class="text-label-caps font-label-caps">APPLE</span>
+</button>
+</div>
+<!-- Footer Link -->
+<footer class="mt-stack-lg text-center">
+<p class="text-on-surface-variant font-body-md">
+                            Zaten hesabın var mı? 
+                            <a class="text-primary font-bold hover:underline underline-offset-4 decoration-primary/30 ml-1 transition-all" href="#">Giriş Yap</a>
+</p>
+</footer>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Information -->
+<footer class="w-full px-container-padding-desktop py-stack-md flex flex-col md:flex-row justify-between items-center gap-stack-md text-on-surface-variant/60 font-label-caps text-label-caps">
+<div class="flex items-center gap-4">
+<span>© 2024 Culina AI.</span>
+<span class="hidden md:inline">•</span>
+<span>The Discerning Visionary.</span>
+</div>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">GİZLİLİK</a>
+<a class="hover:text-primary transition-colors" href="#">ŞARTLAR</a>
+<a class="hover:text-primary transition-colors" href="#">ETİK</a>
+</div>
+</footer>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                // Potential for haptic-like visual feedback or sound
+            });
+        });
+
+        // Toggle Password Visibility Logic
+        const passToggle = document.querySelector('.relative button');
+        const passInput = document.querySelector('#password');
+        if(passToggle && passInput) {
+            passToggle.addEventListener('click', () => {
+                const isPass = passInput.type === 'password';
+                passInput.type = isPass ? 'text' : 'password';
+                passToggle.innerHTML = `<span class="material-symbols-outlined">${isPass ? 'visibility_off' : 'visibility'}</span>`;
+            });
+        }
+    </script>
+</body></html>

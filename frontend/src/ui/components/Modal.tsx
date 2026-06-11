@@ -32,18 +32,23 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 480
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
       >
-        <div className="modal-header">
-          {title && <h3 id="modal-title" className="modal-title">{title}</h3>}
-          <button className="modal-close" onClick={onClose} aria-label="Kapat">×</button>
+        <div className="flex items-center justify-between mb-4">
+          {title && <h3 id="modal-title" className="font-bold text-on-surface">{title}</h3>}
+          <button
+            className="ml-auto p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors"
+            onClick={onClose}
+            aria-label="Kapat"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
         </div>
-        <div className="modal-body">{children}</div>
+        <div>{children}</div>
       </div>
     </div>,
     document.body
   );
 }
 
-/* ─── Confirm dialog ─────────────────────────────────── */
 interface ConfirmProps {
   isOpen: boolean;
   onClose: () => void;
@@ -56,14 +61,25 @@ interface ConfirmProps {
 
 export function ConfirmModal({
   isOpen, onClose, onConfirm, title = "Emin misin?",
-  message, confirmLabel = "Onayla", confirmClass = "btn danger",
+  message, confirmLabel = "Onayla", confirmClass,
 }: ConfirmProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth={400}>
-      <p style={{ color: "var(--muted)", fontSize: 15, marginBottom: 20 }}>{message}</p>
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-        <button className="btn ghost" onClick={onClose}>İptal</button>
-        <button className={confirmClass} onClick={() => { onConfirm(); onClose(); }}>
+      <p className="text-on-surface-variant text-sm leading-relaxed mb-6">{message}</p>
+      <div className="flex gap-3 justify-end">
+        <button
+          className="px-4 py-2 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-semibold hover:bg-surface-container-low transition-colors"
+          onClick={onClose}
+        >
+          İptal
+        </button>
+        <button
+          className={confirmClass?.includes("danger")
+            ? "px-4 py-2 rounded-xl bg-error text-white text-sm font-semibold hover:bg-error/90 transition-colors"
+            : "px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-container transition-colors"
+          }
+          onClick={() => { onConfirm(); onClose(); }}
+        >
           {confirmLabel}
         </button>
       </div>
