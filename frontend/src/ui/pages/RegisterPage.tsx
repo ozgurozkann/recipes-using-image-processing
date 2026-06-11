@@ -52,7 +52,7 @@ export default function RegisterPage() {
           <div className="max-w-sm mx-auto w-full">
             <header className="mb-8">
               <h1 className="text-headline-md md:text-display-lg font-bold text-primary mb-2">
-                Culina AI Dünyasına Katıl
+                Recipe AI Dünyasına Katıl
               </h1>
               <p className="text-on-surface-variant text-body-md">
                 Yapay zeka destekli gastronomi yolculuğuna bugün başla.

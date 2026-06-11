@@ -20,6 +20,17 @@ type Recipe = {
   ingredients: RecipeIngredient[];
 };
 
+type Review = {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_avatar?: string | null;
+  rating: number;
+  comment: string;
+  created_at: string;
+  is_mine: boolean;
+};
+
 const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
 
 const FOOD_PHOTOS = [
@@ -57,6 +68,12 @@ export default function RecipeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [myRating, setMyRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [myRole, setMyRole] = useState("");
   const token = getToken();
 
   function load() {
@@ -67,7 +84,42 @@ export default function RecipeDetailPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, [id]);
+  function loadReviews() {
+    api<{ items: Review[] }>("GET", `/recipes/${id}/reviews`).then((res) => {
+      setReviews(res.items);
+    }).catch(() => {});
+  }
+
+  useEffect(() => {
+    load();
+    loadReviews();
+    if (token) {
+      api<{ role: string }>("GET", "/auth/me").then((m) => setMyRole(m.role)).catch(() => {});
+    }
+  }, [id]);
+
+  async function submitReview() {
+    if (!myRating) return;
+    setReviewLoading(true);
+    try {
+      await api("POST", `/recipes/${id}/reviews`, { rating: myRating, comment: commentText });
+      setMyRating(0);
+      setCommentText("");
+      toast("Yorum eklendi");
+      loadReviews();
+    } catch (e: any) { toastError("Hata", e.message); }
+    finally { setReviewLoading(false); }
+  }
+
+  async function deleteReview(reviewId: number) {
+    setReviewLoading(true);
+    try {
+      await api("DELETE", `/recipes/${id}/reviews/${reviewId}`);
+      toast("Yorum silindi");
+      loadReviews();
+    } catch (e: any) { toastError("Hata", e.message); }
+    finally { setReviewLoading(false); }
+  }
 
   async function toggleFavorite() {
     if (!token) { toastError("Giriş gerekli", "Favorilere eklemek için giriş yapın."); return; }
@@ -277,6 +329,114 @@ export default function RecipeDetailPage() {
                 <span className="bg-secondary-fixed text-on-secondary-container px-3 py-1 rounded-full text-xs font-semibold">
                   {DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
                 </span>
+              </div>
+            )}
+          </div>
+
+          {/* Reviews */}
+          <div className="bg-white rounded-2xl p-6 ambient-shadow border border-black/5">
+            {/* Header + avg */}
+            {(() => {
+              const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+              return (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                    <h3 className="font-semibold text-on-surface text-sm">Yorumlar</h3>
+                  </div>
+                  {reviews.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-primary">{avg.toFixed(1)}</span>
+                      <span className="text-xs text-on-surface-variant">({reviews.length} yorum)</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Rating form */}
+            {token ? (
+              <div className="mb-5 p-4 bg-surface-container-low rounded-xl space-y-3">
+                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Değerlendirin</p>
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className="text-2xl transition-transform hover:scale-110 focus:outline-none"
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => setMyRating(star)}
+                    >
+                      <span className="material-symbols-outlined" style={{
+                        fontVariationSettings: (hoverRating || myRating) >= star ? "'FILL' 1" : "'FILL' 0",
+                        color: (hoverRating || myRating) >= star ? "#e8a000" : "#ccc",
+                      }}>star</span>
+                    </button>
+                  ))}
+                  {myRating > 0 && <span className="text-xs text-on-surface-variant self-center ml-1">{myRating}/5</span>}
+                </div>
+                <textarea
+                  className="w-full border border-outline-variant rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+                  rows={3}
+                  placeholder="Yorumunuzu yazın… (isteğe bağlı)"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  maxLength={1000}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={submitReview}
+                    disabled={!myRating || reviewLoading}
+                    className="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-bold disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                  >
+                    {reviewLoading ? "Gönderiliyor…" : "Gönder"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-on-surface-variant mb-4">
+                Yorum yapmak için{" "}
+                <Link to="/login" className="text-primary font-semibold hover:underline">giriş yapın</Link>.
+              </p>
+            )}
+
+            {/* Review list */}
+            {reviews.length === 0 ? (
+              <p className="text-xs text-on-surface-variant text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
+            ) : (
+              <div className="space-y-4 max-h-64 overflow-y-auto pr-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#154212 #f0f0f0" }}>
+                {reviews.map((rv) => (
+                  <div key={rv.id} className={`flex gap-3 ${rv.is_mine ? "bg-primary/5 rounded-xl p-3" : ""}`}>
+                    <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary-fixed flex items-center justify-center overflow-hidden">
+                      {rv.user_avatar
+                        ? <img src={rv.user_avatar} alt="" className="w-full h-full object-cover" />
+                        : <span className="text-white text-xs font-bold">{rv.user_name[0]?.toUpperCase()}</span>
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="text-xs font-semibold text-on-surface truncate">{rv.user_name}</span>
+                        <div className="flex">
+                          {[1,2,3,4,5].map((s) => (
+                            <span key={s} className="material-symbols-outlined text-xs" style={{ fontVariationSettings: rv.rating >= s ? "'FILL' 1" : "'FILL' 0", color: rv.rating >= s ? "#e8a000" : "#ccc" }}>star</span>
+                          ))}
+                        </div>
+                        {(rv.is_mine || myRole === "admin") && (
+                          <button
+                            onClick={() => deleteReview(rv.id)}
+                            disabled={reviewLoading}
+                            className="ml-auto text-[10px] text-error hover:underline disabled:opacity-40"
+                          >
+                            Sil
+                          </button>
+                        )}
+                      </div>
+                      {rv.comment && <p className="text-xs text-on-surface-variant leading-relaxed">{rv.comment}</p>}
+                      <p className="text-[10px] text-on-surface-variant/50 mt-1">{new Date(rv.created_at).toLocaleDateString("tr-TR")}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

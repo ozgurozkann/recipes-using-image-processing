@@ -329,8 +329,8 @@ export default function AddRecipePage() {
 
       <footer className="culina-footer mt-12">
         <div className="culina-footer-inner">
-          <span className="font-bold text-primary">Culina AI</span>
-          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Culina AI.</p>
+          <span className="font-bold text-primary">Recipe AI</span>
+          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI.</p>
         </div>
       </footer>
     </div>

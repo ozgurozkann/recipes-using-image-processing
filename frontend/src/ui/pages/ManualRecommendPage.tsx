@@ -330,7 +330,7 @@ export default function ManualRecommendPage() {
       {/* Footer */}
       <footer className="culina-footer mt-8">
         <div className="culina-footer-inner">
-          <span className="font-bold text-primary">Culina AI</span>
+          <span className="font-bold text-primary">Recipe AI</span>
           <p className="text-xs text-on-surface-variant opacity-50">© 2024 Laboratory Edition.</p>
         </div>
       </footer>

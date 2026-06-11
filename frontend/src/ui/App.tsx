@@ -34,17 +34,24 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 export default function App() {
   const token = getToken();
   const [role, setRole] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { pathname } = useLocation();
 
   // Auth pages have simplified navbar
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
-    if (!token) { setRole(""); return; }
-    api<{ role: string }>("GET", "/auth/me")
-      .then((me) => setRole(me.role))
-      .catch(() => setRole(""));
+    if (!token) { setRole(""); setAvatarUrl(null); return; }
+    api<{ role: string; avatar_url?: string | null }>("GET", "/auth/me")
+      .then((me) => { setRole(me.role); setAvatarUrl(me.avatar_url ?? null); })
+      .catch(() => { setRole(""); setAvatarUrl(null); });
   }, [token]);
+
+  useEffect(() => {
+    const handler = (e: Event) => setAvatarUrl((e as CustomEvent<string | null>).detail);
+    window.addEventListener("avatar-updated", handler);
+    return () => window.removeEventListener("avatar-updated", handler);
+  }, []);
 
   return (
     <>
@@ -53,7 +60,7 @@ export default function App() {
         <div className="topnav-inner">
           {/* Left: Brand + Nav links */}
           <div className="flex items-center gap-8 min-w-0">
-            <Link to="/" className="topnav-brand">Culina AI</Link>
+            <Link to="/" className="topnav-brand">Recipe AI</Link>
             {!isAuthPage && (
               <nav className="topnav-links hidden md:flex">
                 <NavLink to="/recipes">Tarifler</NavLink>
@@ -84,7 +91,10 @@ export default function App() {
                   <span className="material-symbols-outlined">bookmark</span>
                 </Link>
                 <Link className="topnav-icon-btn" to="/profile" title="Profil">
-                  <span className="material-symbols-outlined">account_circle</span>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="Profil" className="w-6 h-6 rounded-full object-cover ring-2 ring-primary/30" />
+                    : <span className="material-symbols-outlined">account_circle</span>
+                  }
                 </Link>
                 <button className="topnav-icon-btn" onClick={logout} title="Çıkış" style={{ color: "#ba1a1a" }}>
                   <span className="material-symbols-outlined">logout</span>

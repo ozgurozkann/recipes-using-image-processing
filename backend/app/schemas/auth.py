@@ -26,3 +26,4 @@ class UserOut(BaseModel):
     full_name: str
     email: EmailStr
     role: str
+    avatar_url: str | None = None

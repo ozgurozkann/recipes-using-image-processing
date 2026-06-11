@@ -140,8 +140,8 @@ export default function RecipesPage() {
 
       <footer className="culina-footer mt-12">
         <div className="culina-footer-inner">
-          <span className="font-bold text-primary">Culina AI</span>
-          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Culina AI. Seçkin Mutfak Vizyoneri.</p>
+          <span className="font-bold text-primary">Recipe AI</span>
+          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI. Seçkin Mutfak Vizyoneri.</p>
         </div>
       </footer>
     </div>

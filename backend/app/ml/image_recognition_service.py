@@ -172,8 +172,8 @@ _LABEL_TO_TR: dict[str, str] = {
 
 # Eşik değeri: bu güven oranının altındaki sınıfları görmezden gel
 _CONFIDENCE_THRESHOLD = 0.08   # %8
-# Maksimum döndürülecek sonuç sayısı
-_TOP_K = 3
+# Maksimum döndürülecek sonuç sayısı (görsel başına yalnızca en iyi tahmin)
+_TOP_K = 1
 
 
 def _label_to_turkish(label: str) -> str:
@@ -291,8 +291,6 @@ def _dummy_detect(image_path: Path) -> list[DetectedIngredient]:
     name = image_path.name.lower()
     hits = [c for c in _DUMMY_CANDIDATES if c in name]
     if not hits:
-        hits = random.sample(_DUMMY_CANDIDATES, k=random.randint(1, 2))
-    return [
-        DetectedIngredient(name=h, confidence=round(random.uniform(0.72, 0.95), 2))
-        for h in hits[:3]
-    ]
+        hits = random.sample(_DUMMY_CANDIDATES, k=1)
+    best = hits[0]
+    return [DetectedIngredient(name=best, confidence=round(random.uniform(0.72, 0.95), 2))]

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { logout } from "../authStore";
 
-type Me = { id: number; full_name: string; email: string; role: string };
+type Me = { id: number; full_name: string; email: string; role: string; avatar_url?: string | null };
 type Stats = { favorites: number; saved: number };
 
 const TASTE_PROFILES = [
@@ -18,6 +18,8 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -32,6 +34,24 @@ export default function ProfilePage() {
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !me) return;
+    setAvatarUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const updated = await api<Me>("POST", "/users/me/avatar", fd, true);
+      setMe((prev) => prev ? { ...prev, avatar_url: updated.avatar_url } : prev);
+      window.dispatchEvent(new CustomEvent("avatar-updated", { detail: updated.avatar_url ?? null }));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  }
 
   if (loading) return (
     <div className="page-loader">
@@ -80,9 +100,37 @@ export default function ProfilePage() {
             {/* User Card */}
             <div className="glass-card p-8 rounded-[32px] ambient-shadow">
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-24 h-24 rounded-full mb-4 bg-gradient-to-br from-primary to-primary-fixed flex items-center justify-center text-white text-2xl font-black shadow-lg border-4 border-white">
-                  {initials}
-                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="relative w-24 h-24 rounded-full mb-4 shadow-lg border-4 border-white group focus:outline-none"
+                  title="Fotoğrafı değiştir"
+                >
+                  {me.avatar_url ? (
+                    <img
+                      src={me.avatar_url}
+                      alt="Profil fotoğrafı"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-primary-fixed flex items-center justify-center text-white text-2xl font-black">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {avatarUploading
+                      ? <span className="spinner" style={{ width: 20, height: 20, borderColor: "white", borderTopColor: "transparent" }} />
+                      : <span className="material-symbols-outlined text-white text-xl">photo_camera</span>
+                    }
+                  </div>
+                </button>
                 <h2 className="font-bold text-headline-md text-on-surface">{me.full_name || "İsimsiz Kullanıcı"}</h2>
                 <p className="text-on-surface-variant text-sm">{me.email}</p>
               </div>
@@ -279,8 +327,8 @@ export default function ProfilePage() {
 
       <footer className="culina-footer mt-8">
         <div className="culina-footer-inner">
-          <span className="font-bold text-primary">Culina AI</span>
-          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Culina AI. Seçkin Mutfak Vizyoneri.</p>
+          <span className="font-bold text-primary">Recipe AI</span>
+          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI. Seçkin Mutfak Vizyoneri.</p>
         </div>
       </footer>
     </div>

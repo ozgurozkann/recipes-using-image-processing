@@ -17,7 +17,7 @@ export default function HomePage() {
               <span className="gradient-text">Zanaatkâr Hassasiyet.</span>
             </h1>
             <p className="text-body-lg text-on-surface-variant mb-10 max-w-lg leading-relaxed">
-              Yüksek mutfak sanatı ile yapay zekanın kesiştiği noktayı deneyimleyin. Culina AI, lezzet profillerini çözerek beslenmenizi kişiselleştirir.
+              Yüksek mutfak sanatı ile yapay zekanın kesiştiği noktayı deneyimleyin. Recipe AI, lezzet profillerini çözerek beslenmenizi kişiselleştirir.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
@@ -202,7 +202,7 @@ export default function HomePage() {
           <div className="relative z-10">
             <h2 className="text-display-lg-mobile md:text-display-lg font-bold mb-6">
               Mutfak ufkunuzu yeniden tanımlamaya hazır mısınız?{" "}
-              <span className="text-primary italic">Culina AI</span>
+              <span className="text-primary italic">Recipe AI</span>
             </h2>
             <p className="text-body-lg text-on-surface-variant mb-12 max-w-xl mx-auto">
               Yapay zeka ile yaşam sanatında ustalaşan seçkin visyonerlerin ayrıcalıklı dünyasına katılın.
@@ -229,7 +229,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="culina-footer">
         <div className="culina-footer-inner">
-          <div className="text-headline-md font-semibold text-primary">Culina AI</div>
+          <div className="text-headline-md font-semibold text-primary">Recipe AI</div>
           <div className="flex gap-8 flex-wrap justify-center">
             {["Gizlilik", "Şartlar", "Araştırma", "İletişim"].map((l) => (
               <span key={l} className="text-label-caps text-on-surface-variant/70 hover:text-primary transition-colors cursor-pointer">
@@ -238,7 +238,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-label-caps text-on-surface-variant/50">
-            © 2024 Culina AI. Seçkin Mutfak Vizyoneri.
+            © 2024 Recipe AI. Seçkin Mutfak Vizyoneri.
           </p>
         </div>
       </footer>

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -56,6 +58,24 @@ class RecipeCreateIn(BaseModel):
     category_id: int | None = None
     image_url: str = ""
     ingredients: list[RecipeIngredientIn] = Field(default_factory=list)
+
+
+class ReviewIn(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=1000)
+
+
+class ReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    user_name: str
+    user_avatar: str | None = None
+    rating: int
+    comment: str
+    created_at: datetime
+    is_mine: bool = False
 
 
 class RecipeUpdateIn(BaseModel):
