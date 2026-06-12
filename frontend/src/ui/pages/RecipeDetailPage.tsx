@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
@@ -49,6 +49,7 @@ function splitSteps(text: string): string[] {
 export default function RecipeDetailPage() {
   const { id } = useParams();
   const [item, setItem] = useState<Recipe | null>(null);
+  const [cookingMode, setCookingMode] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
@@ -151,6 +152,7 @@ export default function RecipeDetailPage() {
   const steps = splitSteps(item.instructions);
 
   return (
+    <>
     <div className="pb-16">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-5 md:px-16 py-8">
@@ -221,6 +223,15 @@ export default function RecipeDetailPage() {
                   bookmark
                 </span>
                 {saved ? "KAYDEDİLDİ" : "KAYDET"}
+              </button>
+              <button
+                onClick={() => setCookingMode(true)}
+                className="flex items-center gap-2 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider bg-primary text-white shadow-lg active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  cooking
+                </span>
+                TARİFİ DENE
               </button>
             </div>
           </div>
@@ -437,5 +448,291 @@ export default function RecipeDetailPage() {
         </aside>
       </section>
     </div>
+
+    {cookingMode && (
+      <CookingModeModal
+        recipe={item}
+        steps={steps}
+        onClose={() => setCookingMode(false)}
+      />
+    )}
+    </>
+  );
+}
+
+// ─── Cooking Mode Modal ───────────────────────────────────────────────────────
+
+type CookingPhase = "ingredients" | "cooking" | "done";
+
+function CookingModeModal({
+  recipe,
+  steps,
+  onClose,
+}: {
+  recipe: Recipe;
+  steps: string[];
+  onClose: () => void;
+}) {
+  const [phase, setPhase] = useState<CookingPhase>("ingredients");
+  const [stepIndex, setStepIndex] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (phase === "done") {
+      countdownRef.current = setTimeout(() => onClose(), 5000);
+    }
+    return () => { if (countdownRef.current) clearTimeout(countdownRef.current); };
+  }, [phase, onClose]);
+
+  function startCooking() {
+    if (steps.length === 0) { setPhase("done"); return; }
+    setStepIndex(0);
+    setAnimKey((k) => k + 1);
+    setPhase("cooking");
+  }
+
+  function next() {
+    if (stepIndex >= steps.length - 1) {
+      setPhase("done");
+    } else {
+      setStepIndex((i) => i + 1);
+      setAnimKey((k) => k + 1);
+    }
+  }
+
+  function prev() {
+    if (stepIndex === 0) {
+      setPhase("ingredients");
+    } else {
+      setStepIndex((i) => i - 1);
+      setAnimKey((k) => k + 1);
+    }
+  }
+
+  const progress = steps.length > 0 ? ((stepIndex + 1) / steps.length) * 100 : 100;
+
+  return (
+    <>
+      <style>{`
+        @keyframes steam-rise {
+          0%   { opacity: 0;   transform: translateY(0px)   scaleX(1);   }
+          40%  { opacity: 0.7; transform: translateY(-12px) scaleX(1.3); }
+          100% { opacity: 0;   transform: translateY(-28px) scaleX(0.7); }
+        }
+        @keyframes pot-rock {
+          0%,100% { transform: rotate(-5deg) translateY(0px);  }
+          50%     { transform: rotate(5deg)  translateY(-8px); }
+        }
+        @keyframes step-fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0px);  }
+        }
+        @keyframes confetti-pop {
+          0%   { opacity: 0; transform: scale(0.5); }
+          60%  { opacity: 1; transform: scale(1.1); }
+          100% { opacity: 1; transform: scale(1);   }
+        }
+      `}</style>
+
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+
+          {/* ── INGREDIENTS PHASE ─────────────────── */}
+          {phase === "ingredients" && (
+            <>
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>cooking</span>
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-on-surface">Tarifi Dene</h2>
+                    <p className="text-xs text-on-surface-variant truncate max-w-[200px]">{recipe.title}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-on-surface-variant text-sm">close</span>
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_basket</span>
+                  Gerekli Malzemeler · {recipe.ingredients.length} adet
+                </p>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+                  {recipe.ingredients.length === 0 && (
+                    <p className="text-sm text-on-surface-variant py-4 text-center">Bu tarif için malzeme bilgisi yok.</p>
+                  )}
+                  {recipe.ingredients.map((ing, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl">
+                      <div className="w-2 h-2 rounded-full bg-secondary flex-shrink-0" />
+                      <span className="font-medium text-sm text-on-surface capitalize flex-1">{ing.name}</span>
+                      <span className="text-xs font-semibold text-primary bg-primary/8 px-2 py-0.5 rounded-lg">
+                        {ing.quantity % 1 === 0 ? ing.quantity : ing.quantity.toFixed(2)} {ing.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="px-6 pb-6">
+                <button
+                  className="w-full bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-all shadow-lg shadow-primary/20"
+                  onClick={startCooking}
+                  disabled={steps.length === 0}
+                >
+                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
+                  {steps.length === 0 ? "Adım bilgisi yok" : "Hazırım, Başlayalım!"}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── COOKING PHASE ─────────────────────── */}
+          {phase === "cooking" && (
+            <>
+              {/* Header + progress */}
+              <div className="px-6 pt-5 pb-4 border-b border-outline-variant/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                    Adım {stepIndex + 1} / {steps.length}
+                  </span>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-on-surface-variant text-sm">close</span>
+                  </button>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                {/* Step dots — only when ≤ 10 steps */}
+                {steps.length <= 10 && (
+                  <div className="flex justify-between mt-2 px-0.5">
+                    {steps.map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-full transition-all duration-300"
+                        style={{
+                          width: i === stepIndex ? 20 : 8,
+                          height: 8,
+                          background: i <= stepIndex ? "var(--md-sys-color-primary)" : "var(--md-sys-color-outline-variant)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Step content */}
+              <div
+                key={animKey}
+                className="px-8 py-8 min-h-[180px] flex flex-col items-center justify-center text-center"
+                style={{ animation: "step-fade-in 0.35s ease-out" }}
+              >
+                <div className="w-14 h-14 rounded-full bg-primary-fixed flex items-center justify-center font-extrabold text-2xl text-primary mb-5 shadow-md">
+                  {stepIndex + 1}
+                </div>
+                <p className="text-on-surface text-base leading-relaxed font-medium max-w-sm">
+                  {steps[stepIndex]}
+                </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 px-6 pb-6">
+                <button
+                  className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-semibold hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1"
+                  onClick={prev}
+                >
+                  <span className="material-symbols-outlined text-sm">arrow_back</span>
+                  {stepIndex === 0 ? "Malzemeler" : "Geri"}
+                </button>
+                <button
+                  className="flex-[2] bg-primary text-white py-3 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary-container transition-all shadow-lg shadow-primary/20"
+                  onClick={next}
+                >
+                  {stepIndex === steps.length - 1 ? (
+                    <>
+                      <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      Bitti!
+                    </>
+                  ) : (
+                    <>
+                      Yaptım
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── DONE PHASE ────────────────────────── */}
+          {phase === "done" && (
+            <div
+              className="px-8 py-10 flex flex-col items-center text-center"
+              style={{ animation: "confetti-pop 0.5s ease-out" }}
+            >
+              {/* Animated pot */}
+              <div className="relative mb-2">
+                {/* Steam wisps */}
+                <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-3">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 6,
+                        height: 28,
+                        borderRadius: 99,
+                        background: "rgba(100,100,100,0.18)",
+                        animation: `steam-rise 1.6s ease-in-out ${i * 0.4}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div
+                  className="text-8xl select-none"
+                  style={{ animation: "pot-rock 1.2s ease-in-out infinite" }}
+                >
+                  🍲
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-on-surface mt-4 mb-1">Yemek Hazır! 🎉</h2>
+              <p className="text-lg font-semibold text-primary mb-1">Afiyet Olsun!</p>
+              <p className="text-sm text-on-surface-variant mb-8">
+                {recipe.title} başarıyla tamamlandı.
+              </p>
+
+              <button
+                className="bg-primary text-white px-10 py-3.5 rounded-xl font-bold hover:bg-primary-container transition-all shadow-lg shadow-primary/20"
+                onClick={onClose}
+              >
+                Teşekkürler!
+              </button>
+              <p className="text-xs text-on-surface-variant/50 mt-3">5 saniye içinde kapanacak</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </>
   );
 }
