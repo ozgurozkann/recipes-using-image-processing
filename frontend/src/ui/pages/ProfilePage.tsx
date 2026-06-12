@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { logout } from "../authStore";
 import { getRecentSearchTerms } from "../searchInsights";
+import { useLanguage } from "../i18n";
 
 type Me = { id: number; full_name: string; email: string; role: string; avatar_url?: string | null };
 type Stats = {
@@ -19,14 +20,8 @@ type Stats = {
   };
 };
 
-const TASTE_PROFILES = [
-  { icon: "restaurant", label: "Umami", level: "Yüksek", color: "text-secondary-container border-secondary-container/30" },
-  { icon: "eco", label: "Bitter", level: "Orta", color: "text-primary border-primary/20" },
-  { icon: "local_fire_department", label: "Acı", level: "Düşük", color: "text-secondary border-secondary/20" },
-  { icon: "water_drop", label: "Asit", level: "Extreme", color: "text-primary-container border-primary-container/20" },
-];
-
 export default function ProfilePage() {
+  const { lang, t } = useLanguage();
   const [me, setMe] = useState<Me | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -73,9 +68,16 @@ export default function ProfilePage() {
 
   if (err || !me) return (
     <div className="flex items-center justify-center py-24">
-      <div className="px-6 py-4 bg-error-container text-on-error-container rounded-2xl">{err || "Kullanıcı bulunamadı"}</div>
+      <div className="px-6 py-4 bg-error-container text-on-error-container rounded-2xl">{err || t("prof_not_found")}</div>
     </div>
   );
+
+  const TASTE_PROFILES = [
+    { icon: "restaurant", label: "Umami", level: lang === "tr" ? "Yüksek" : "High", color: "text-secondary-container border-secondary-container/30" },
+    { icon: "eco", label: "Bitter", level: lang === "tr" ? "Orta" : "Medium", color: "text-primary border-primary/20" },
+    { icon: "local_fire_department", label: lang === "tr" ? "Acı" : "Spicy", level: lang === "tr" ? "Düşük" : "Low", color: "text-secondary border-secondary/20" },
+    { icon: "water_drop", label: lang === "tr" ? "Asit" : "Acid", level: "Extreme", color: "text-primary-container border-primary-container/20" },
+  ];
 
   const initials = me.full_name
     ? me.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
@@ -89,45 +91,61 @@ export default function ProfilePage() {
   const nutrientDash = 440;
   const nutrientOffset = nutrientDash - (nutrientDash * nutrientScore) / 100;
   const activityRows = [
-    { label: "Tarif ekleme", count: stats?.weekly.recipes_added ?? 0, points: 30, color: "bg-primary" },
-    { label: "Yorum yapma", count: stats?.weekly.reviews ?? 0, points: 15, color: "bg-secondary-container" },
-    { label: "Beğeni", count: stats?.weekly.favorites ?? 0, points: 10, color: "bg-primary-fixed" },
-    { label: "Kaydetme", count: stats?.weekly.saved ?? 0, points: 8, color: "bg-secondary" },
+    { label: t("prof_act_add"), count: stats?.weekly.recipes_added ?? 0, points: 30, color: "bg-primary" },
+    { label: t("prof_act_review"), count: stats?.weekly.reviews ?? 0, points: 15, color: "bg-secondary-container" },
+    { label: t("prof_act_fav"), count: stats?.weekly.favorites ?? 0, points: 10, color: "bg-primary-fixed" },
+    { label: t("prof_act_save"), count: stats?.weekly.saved ?? 0, points: 8, color: "bg-secondary" },
   ];
   const insights = [
     primarySearch
       ? {
           icon: "search",
           iconColor: "text-primary bg-primary/10",
-          title: `"${primarySearch}" aramaları öne çıkıyor`,
+          title: lang === "tr"
+            ? `"${primarySearch}" aramaları öne çıkıyor`
+            : `"${primarySearch}" searches stand out`,
           desc: secondarySearch
-            ? `Son aramalarınızda "${primarySearch}" ve "${secondarySearch}" dikkat çekiyor. Önerilerde bu temaya yakın tarifleri takip edebilirsiniz.`
-            : `Son aramanız "${primarySearch}". Benzer malzemelerle öneri alırsanız daha isabetli sonuçlar çıkar.`,
+            ? (lang === "tr"
+                ? `Son aramalarınızda "${primarySearch}" ve "${secondarySearch}" dikkat çekiyor. Önerilerde bu temaya yakın tarifleri takip edebilirsiniz.`
+                : `"${primarySearch}" and "${secondarySearch}" stand out in your recent searches. You can follow recipes close to this theme in suggestions.`)
+            : (lang === "tr"
+                ? `Son aramanız "${primarySearch}". Benzer malzemelerle öneri alırsanız daha isabetli sonuçlar çıkar.`
+                : `Your last search was "${primarySearch}". Getting suggestions with similar ingredients will yield more accurate results.`),
         }
       : {
           icon: "travel_explore",
           iconColor: "text-primary bg-primary/10",
-          title: "Arama alışkanlığı henüz oluşmadı",
-          desc: "Tarif veya malzeme aradıkça bu alan ilgi alanlarınıza göre şekillenecek.",
+          title: lang === "tr" ? "Arama alışkanlığı henüz oluşmadı" : "No search habit yet",
+          desc: lang === "tr"
+            ? "Tarif veya malzeme aradıkça bu alan ilgi alanlarınıza göre şekillenecek."
+            : "As you search for recipes or ingredients, this section will take shape based on your interests.",
         },
     (stats?.saved ?? 0) >= (stats?.favorites ?? 0)
       ? {
           icon: "bookmark",
           iconColor: "text-secondary bg-secondary/10",
-          title: "Kaydetme eğiliminiz güçlü",
-          desc: `${stats?.saved ?? 0} tarif kaydettiniz. Kaydettiklerinizi haftalık menü planı gibi kullanabilirsiniz.`,
+          title: lang === "tr" ? "Kaydetme eğiliminiz güçlü" : "Strong saving tendency",
+          desc: lang === "tr"
+            ? `${stats?.saved ?? 0} tarif kaydettiniz. Kaydettiklerinizi haftalık menü planı gibi kullanabilirsiniz.`
+            : `You've saved ${stats?.saved ?? 0} recipes. You can use your saves like a weekly menu plan.`,
         }
       : {
           icon: "favorite",
           iconColor: "text-secondary bg-secondary/10",
-          title: "Beğendiğiniz tarifler profilinizi belirliyor",
-          desc: `${stats?.favorites ?? 0} favori tarifiniz var. Benzer lezzetlerde yeni tarif keşfi için iyi bir sinyal oluştu.`,
+          title: lang === "tr" ? "Beğendiğiniz tarifler profilinizi belirliyor" : "Your liked recipes define your profile",
+          desc: lang === "tr"
+            ? `${stats?.favorites ?? 0} favori tarifiniz var. Benzer lezzetlerde yeni tarif keşfi için iyi bir sinyal oluştu.`
+            : `You have ${stats?.favorites ?? 0} favorite recipes. This is a good signal for discovering new recipes with similar flavors.`,
         },
     {
       icon: "trending_up",
       iconColor: "text-primary bg-primary/10",
-      title: activityScore >= 70 ? "Bu hafta etkileşim yoğun" : "Bu hafta aktivite alanı açık",
-      desc: `Haftalık puanınız ${activityScore}. Tarif ekleme, yorum, beğeni ve kaydetme yaptıkça bu skor yükselir.`,
+      title: activityScore >= 70
+        ? (lang === "tr" ? "Bu hafta etkileşim yoğun" : "High engagement this week")
+        : (lang === "tr" ? "Bu hafta aktivite alanı açık" : "Room for more activity this week"),
+      desc: lang === "tr"
+        ? `Haftalık puanınız ${activityScore}. Tarif ekleme, yorum, beğeni ve kaydetme yaptıkça bu skor yükselir.`
+        : `Your weekly score is ${activityScore}. This score rises as you add recipes, review, like, and save.`,
     },
   ];
 
@@ -140,10 +158,10 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">
-                Kişisel Profil
+                {t("prof_eyebrow")}
               </span>
               <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-primary tracking-tight">
-                {me.full_name || "Culina Gurme"}
+                {me.full_name || t("prof_user_default")}
               </h1>
             </div>
           </div>
@@ -169,12 +187,12 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
                   className="relative w-24 h-24 rounded-full mb-4 shadow-lg border-4 border-white group focus:outline-none"
-                  title="Fotoğrafı değiştir"
+                  title={t("prof_change_photo")}
                 >
                   {me.avatar_url ? (
                     <img
                       src={me.avatar_url}
-                      alt="Profil fotoğrafı"
+                      alt={t("prof_change_photo")}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
@@ -189,14 +207,14 @@ export default function ProfilePage() {
                     }
                   </div>
                 </button>
-                <h2 className="font-bold text-headline-md text-on-surface">{me.full_name || "İsimsiz Kullanıcı"}</h2>
+                <h2 className="font-bold text-headline-md text-on-surface">{me.full_name || t("prof_unnamed")}</h2>
                 <p className="text-on-surface-variant text-sm">{me.email}</p>
               </div>
 
               <div className="space-y-3 mb-6">
                 {[
-                  { label: "KULlANICI ID", value: `#${me.id}` },
-                  { label: "ROL", value: me.role === "admin" ? "Admin" : "Kullanıcı" },
+                  { label: t("prof_id"), value: `#${me.id}` },
+                  { label: t("prof_role"), value: me.role === "admin" ? t("prof_role_admin") : t("prof_role_user") },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between items-center py-2 border-b border-outline-variant/30">
                     <span className="text-on-surface-variant text-xs font-semibold uppercase tracking-wider">{row.label}</span>
@@ -210,15 +228,15 @@ export default function ProfilePage() {
                 className="w-full py-3 rounded-xl border border-error/20 text-error text-sm font-semibold hover:bg-error-container transition-colors flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">logout</span>
-                Çıkış Yap
+                {t("prof_logout")}
               </button>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Favori Tarif", val: stats?.favorites ?? 0, icon: "favorite", link: "/favorites", color: "text-secondary" },
-                { label: "Kaydedilen", val: stats?.saved ?? 0, icon: "bookmark", link: "/saved", color: "text-primary" },
+                { label: t("prof_fav_stat"), val: stats?.favorites ?? 0, icon: "favorite", link: "/favorites", color: "text-secondary" },
+                { label: t("prof_saved_stat"), val: stats?.saved ?? 0, icon: "bookmark", link: "/saved", color: "text-primary" },
               ].map((s) => (
                 <Link
                   key={s.label}
@@ -234,12 +252,12 @@ export default function ProfilePage() {
 
             {/* Quick Links */}
             <div className="glass-card p-6 rounded-[32px] ambient-shadow">
-              <h3 className="font-bold text-sm mb-4 text-on-surface">Hızlı Erişim</h3>
+              <h3 className="font-bold text-sm mb-4 text-on-surface">{t("prof_quick")}</h3>
               <div className="space-y-2">
                 {[
-                  { to: "/recipes/add", icon: "add_circle", label: "Tarif Ekle", desc: "Kendi tarifini paylaş" },
-                  { to: "/recommend", icon: "grass", label: "Tarif Önerisi Al", desc: "Manuel malzeme seç" },
-                  { to: "/recipes/popular", icon: "star", label: "Popüler Tarifler", desc: "En çok sevilen tarifler" },
+                  { to: "/recipes/add", icon: "add_circle", label: t("prof_link1_label"), desc: t("prof_link1_desc") },
+                  { to: "/recommend", icon: "grass", label: t("prof_link2_label"), desc: t("prof_link2_desc") },
+                  { to: "/recipes/popular", icon: "star", label: t("prof_link3_label"), desc: t("prof_link3_desc") },
                 ].map((l) => (
                   <Link key={l.to} to={l.to}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container-low transition-colors group"
@@ -265,21 +283,21 @@ export default function ProfilePage() {
             <div className="glass-card p-8 rounded-[32px] overflow-hidden relative ambient-shadow">
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
-                  <h2 className="font-bold text-headline-md text-primary">AI Lezzet Profili</h2>
-                  <p className="text-on-surface-variant text-body-md">Son seçimlerinize göre duyusal şema.</p>
+                  <h2 className="font-bold text-headline-md text-primary">{t("prof_taste_h2")}</h2>
+                  <p className="text-on-surface-variant text-body-md">{t("prof_taste_desc")}</p>
                 </div>
                 <div className="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
-                  %98 DOĞRULUK
+                  {t("prof_accuracy")}
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                {TASTE_PROFILES.map((t) => (
-                  <div key={t.label} className="flex flex-col items-center p-4 rounded-2xl bg-surface-container-low">
-                    <div className={`w-16 h-16 rounded-full border-4 ${t.color} flex items-center justify-center mb-2`}>
-                      <span className={`material-symbols-outlined ${t.color.split(" ")[0]}`}>{t.icon}</span>
+                {TASTE_PROFILES.map((tp) => (
+                  <div key={tp.label} className="flex flex-col items-center p-4 rounded-2xl bg-surface-container-low">
+                    <div className={`w-16 h-16 rounded-full border-4 ${tp.color} flex items-center justify-center mb-2`}>
+                      <span className={`material-symbols-outlined ${tp.color.split(" ")[0]}`}>{tp.icon}</span>
                     </div>
-                    <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t.label}</span>
-                    <span className="font-bold text-primary">{t.level}</span>
+                    <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{tp.label}</span>
+                    <span className="font-bold text-primary">{tp.level}</span>
                   </div>
                 ))}
               </div>
@@ -291,7 +309,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Activity Gauge */}
               <div className="glass-card p-8 rounded-[32px] flex flex-col items-center text-center ambient-shadow">
-                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">Haftalık Aktivite Puanı</h3>
+                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">{t("prof_weekly")}</h3>
                 <div className="relative w-40 h-40 mb-4">
                   <svg className="w-full h-full" viewBox="0 0 160 160">
                     <circle className="text-surface-container-high" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" strokeWidth="8" />
@@ -310,21 +328,21 @@ export default function ProfilePage() {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-4xl font-black text-primary">{nutrientScore}</span>
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">PUAN</span>
+                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t("prof_score")}</span>
                   </div>
                 </div>
-                <p className="text-sm text-on-surface-variant px-4">Tarif ekleme, yorum, beğeni ve kaydetme hareketlerine göre hesaplanır.</p>
+                <p className="text-sm text-on-surface-variant px-4">{t("prof_weekly_desc")}</p>
               </div>
 
               {/* Activity Bars */}
               <div className="glass-card p-8 rounded-[32px] ambient-shadow">
-                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">Puan Dağılımı</h3>
+                <h3 className="text-xs font-semibold text-on-surface-variant mb-6 tracking-widest uppercase">{t("prof_dist")}</h3>
                 <div className="space-y-5">
                   {activityRows.map((m) => (
                     <div key={m.label}>
                       <div className="flex justify-between mb-1.5">
                         <span className="text-sm font-semibold text-on-surface">{m.label}</span>
-                        <span className="text-sm text-on-surface-variant">{m.count} kez · +{m.points} puan</span>
+                        <span className="text-sm text-on-surface-variant">{m.count} {t("prof_act_times")} · +{m.points} {t("prof_act_pts")}</span>
                       </div>
                       <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
                         <div className={`h-full ${m.color} rounded-full transition-all duration-700`} style={{ width: `${Math.min(100, m.count * m.points)}%` }} />
@@ -338,7 +356,7 @@ export default function ProfilePage() {
             {/* Insights */}
             <div className="glass-card rounded-[32px] overflow-hidden ambient-shadow">
               <div className="p-6 border-b border-outline-variant/20 flex justify-between items-center">
-                <h3 className="font-bold text-headline-md text-primary">Akıllı İçgörüler</h3>
+                <h3 className="font-bold text-headline-md text-primary">{t("prof_insights")}</h3>
               </div>
               <div className="divide-y divide-outline-variant/20">
                 {insights.map((ins) => (
@@ -361,7 +379,7 @@ export default function ProfilePage() {
       <footer className="culina-footer mt-8">
         <div className="culina-footer-inner">
           <span className="font-bold text-primary">Recipe AI</span>
-          <p className="text-xs text-on-surface-variant opacity-50">© 2024 Recipe AI. Seçkin Mutfak Vizyoneri.</p>
+          <p className="text-xs text-on-surface-variant opacity-50">{t("prof_copyright")}</p>
         </div>
       </footer>
     </div>

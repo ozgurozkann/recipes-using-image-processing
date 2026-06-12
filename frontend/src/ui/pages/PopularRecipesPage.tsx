@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
+import { useLanguage } from "../i18n";
 
 type PopularRecipe = {
   id: number; title: string; description?: string;
   favorite_count: number; save_count: number; difficulty?: string;
   cooking_time?: number; serving_count?: number; category_id?: number | null; image_url?: string;
+  avg_rating?: number | null; review_count?: number | null;
 };
-
-const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
 
 function formatCount(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`;
@@ -18,6 +18,7 @@ function formatCount(value: number): string {
 }
 
 export default function PopularRecipesPage() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<PopularRecipe[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,11 +62,11 @@ export default function PopularRecipesPage() {
           <div className="flex items-center gap-3 mb-2">
             <span className="material-symbols-outlined text-secondary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
             <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight">
-              En Popüler Tarifler
+              {t("pop_h1")}
             </h1>
           </div>
           <p className="text-on-surface-variant text-body-lg max-w-2xl">
-            Favori ve kaydetme sayısına göre sıralanmış, topluluğumuzun en çok sevdiği seçkin lezzetler.
+            {t("pop_desc")}
           </p>
         </section>
 
@@ -78,7 +79,7 @@ export default function PopularRecipesPage() {
           <section className="mb-16">
             <div className="flex items-center gap-2 mb-6">
               <span className="material-symbols-outlined text-primary">military_tech</span>
-              <h2 className="font-bold text-on-surface">Podyum</h2>
+              <h2 className="font-bold text-on-surface">{t("pop_podium")}</h2>
             </div>
             <div className="grid grid-cols-3 gap-4 items-end">
               {podium.map(({ recipe, rank }) => (
@@ -91,14 +92,14 @@ export default function PopularRecipesPage() {
         {/* List */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-bold text-on-surface">Tüm Popüler Tarifler</h2>
+            <h2 className="font-bold text-on-surface">{t("pop_all_h2")}</h2>
             <div className="flex gap-2">
               {(["all", "quick"] as const).map((f) => (
                 <button key={f}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${filter === f ? "bg-primary text-white" : "bg-surface-container-high text-on-surface-variant hover:bg-outline-variant/30"}`}
                   onClick={() => setFilter(f)}
                 >
-                  {f === "all" ? "Tümü" : "Hızlı (≤30dk)"}
+                  {f === "all" ? t("pop_filter_all") : t("pop_filter_quick")}
                 </button>
               ))}
             </div>
@@ -107,7 +108,7 @@ export default function PopularRecipesPage() {
           {visibleItems.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12">
               <span className="material-symbols-outlined text-outline text-4xl">filter_alt_off</span>
-              <p className="text-on-surface-variant">Bu filtrede gösterilecek tarif yok.</p>
+              <p className="text-on-surface-variant">{t("pop_empty")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -147,6 +148,12 @@ function PodiumCard({ recipe, rank }: { recipe: PopularRecipe; rank: 1 | 2 | 3 }
         <div className="flex items-center gap-3 text-white/80 text-xs">
           <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>{formatCount(recipe.favorite_count)}</span>
           <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>bookmark</span>{formatCount(recipe.save_count)}</span>
+          {recipe.avg_rating != null && recipe.review_count != null && recipe.review_count > 0 && (
+            <span className="flex items-center gap-0.5 text-yellow-300 font-semibold">
+              <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              {recipe.avg_rating.toFixed(1)}
+            </span>
+          )}
         </div>
       </div>
     </Link>
@@ -154,25 +161,27 @@ function PodiumCard({ recipe, rank }: { recipe: PopularRecipe; rank: 1 | 2 | 3 }
 }
 
 function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank: number; onRefresh: () => void }) {
+  const { lang, t } = useLanguage();
   const photo = getRecipePhoto(recipe, 720, 540);
-  const difficulty = recipe.difficulty ? DIFFICULTY_LABEL[recipe.difficulty] || recipe.difficulty : null;
+  const diffLabel = (d: string) => ({ easy: t("diff_easy"), medium: t("diff_medium"), hard: t("diff_hard") }[d] ?? d);
+  const difficulty = recipe.difficulty ? diffLabel(recipe.difficulty) : null;
 
   async function handleFavorite(e: React.MouseEvent) {
     e.preventDefault();
     try {
       const res = await api<{ favorited: boolean }>("POST", `/recipes/${recipe.id}/favorite`);
-      toast(res.favorited ? "Favorilere eklendi" : "Favorilerden çıkarıldı");
+      toast(res.favorited ? (lang === "tr" ? "Favorilere eklendi" : "Added to favorites") : (lang === "tr" ? "Favorilerden çıkarıldı" : "Removed from favorites"));
       onRefresh();
-    } catch (error: any) { toastError("Hata", error.message); }
+    } catch (error: any) { toastError(lang === "tr" ? "Hata" : "Error", error.message); }
   }
 
   async function handleSave(e: React.MouseEvent) {
     e.preventDefault();
     try {
       const res = await api<{ saved: boolean }>("POST", `/recipes/${recipe.id}/save`);
-      toast(res.saved ? "Kaydedildi" : "Kayıt kaldırıldı");
+      toast(res.saved ? (lang === "tr" ? "Kaydedildi" : "Saved") : (lang === "tr" ? "Kayıt kaldırıldı" : "Unsaved"));
       onRefresh();
-    } catch (error: any) { toastError("Hata", error.message); }
+    } catch (error: any) { toastError(lang === "tr" ? "Hata" : "Error", error.message); }
   }
 
   return (
@@ -185,7 +194,7 @@ function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank:
         {difficulty && (
           <span className="absolute top-3 right-12 text-[10px] font-bold px-2 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm">{difficulty}</span>
         )}
-        <button className="absolute top-3 right-3 p-1.5 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors" onClick={handleSave} title="Kaydet">
+        <button className="absolute top-3 right-3 p-1.5 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors" onClick={handleSave} title={t("detail_save_btn")}>
           <span className="material-symbols-outlined text-sm">bookmark</span>
         </button>
       </div>
@@ -194,8 +203,8 @@ function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank:
           <h3 className="font-semibold text-on-surface leading-snug mb-2 hover:text-primary transition-colors">{recipe.title}</h3>
         </Link>
         <div className="flex items-center gap-3 text-xs text-on-surface-variant mb-2">
-          {recipe.cooking_time ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">schedule</span>{recipe.cooking_time} dk</span> : null}
-          {recipe.serving_count ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">group</span>{recipe.serving_count} kişi</span> : null}
+          {recipe.cooking_time ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">schedule</span>{recipe.cooking_time} {t("unit_dk")}</span> : null}
+          {recipe.serving_count ? <span className="flex items-center gap-1"><span className="material-symbols-outlined text-xs">group</span>{recipe.serving_count} {t("unit_kisi")}</span> : null}
         </div>
         <div className="flex items-center gap-2 mt-auto pt-3 border-t border-outline-variant/20">
           <button className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-secondary transition-colors" onClick={handleFavorite}>
@@ -204,7 +213,14 @@ function PopularCard({ recipe, rank, onRefresh }: { recipe: PopularRecipe; rank:
           <span className="flex items-center gap-1 text-xs text-on-surface-variant">
             <span className="material-symbols-outlined text-sm">bookmark</span>{formatCount(recipe.save_count)}
           </span>
-          <Link to={`/recipes/${recipe.id}`} className="ml-auto text-xs font-semibold text-primary hover:underline">Gör</Link>
+          {recipe.avg_rating != null && recipe.review_count != null && recipe.review_count > 0 && (
+            <span className="flex items-center gap-0.5 text-xs text-amber-500 font-semibold">
+              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              {recipe.avg_rating.toFixed(1)}
+              <span className="text-on-surface-variant font-normal">({recipe.review_count})</span>
+            </span>
+          )}
+          <Link to={`/recipes/${recipe.id}`} className="ml-auto text-xs font-semibold text-primary hover:underline">{t("pop_view")}</Link>
         </div>
       </div>
     </article>

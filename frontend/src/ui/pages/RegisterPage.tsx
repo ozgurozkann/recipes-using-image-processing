@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { setToken } from "../authStore";
+import { useLanguage } from "../i18n";
 
 export default function RegisterPage() {
+  const { t } = useLanguage();
   const [full_name, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +44,7 @@ export default function RegisterPage() {
             style={{ background: "rgba(255,219,208,0.9)", backdropFilter: "blur(12px)" }}>
             <span className="text-label-caps font-semibold text-on-secondary-container flex items-center gap-2">
               <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              GASTRONOMİ REHBERİNİZ
+              {t("reg_chip")}
             </span>
           </div>
         </div>
@@ -52,10 +54,10 @@ export default function RegisterPage() {
           <div className="max-w-sm mx-auto w-full">
             <header className="mb-8">
               <h1 className="text-headline-md md:text-display-lg font-bold text-primary mb-2">
-                Recipe AI Dünyasına Katıl
+                {t("reg_title")}
               </h1>
               <p className="text-on-surface-variant text-body-md">
-                Yapay zeka destekli gastronomi yolculuğuna bugün başla.
+                {t("reg_subtitle")}
               </p>
             </header>
 
@@ -70,14 +72,14 @@ export default function RegisterPage() {
               {/* Full Name */}
               <div className="group">
                 <label className="block text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors font-semibold uppercase tracking-wider text-xs">
-                  AD SOYAD
+                  {t("reg_name")}
                 </label>
                 <input
                   className="quiet-input"
                   type="text"
                   value={full_name}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Gurme İsmi"
+                  placeholder={t("reg_name_ph")}
                   autoFocus
                 />
               </div>
@@ -85,7 +87,7 @@ export default function RegisterPage() {
               {/* Email */}
               <div className="group">
                 <label className="block text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors font-semibold uppercase tracking-wider text-xs">
-                  E-POSTA
+                  {t("reg_email")}
                 </label>
                 <input
                   className="quiet-input"
@@ -100,7 +102,7 @@ export default function RegisterPage() {
               {/* Password */}
               <div className="group relative">
                 <label className="block text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors font-semibold uppercase tracking-wider text-xs">
-                  ŞİFRE
+                  {t("reg_password")}
                 </label>
                 <input
                   className="quiet-input pr-10"
@@ -129,9 +131,9 @@ export default function RegisterPage() {
                 className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-body-md shadow-lg shadow-primary/20 hover:bg-primary-container active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {loading ? (
-                  <><span className="spinner" /> Kayıt yapılıyor…</>
+                  <><span className="spinner" /> {t("reg_loading")}</>
                 ) : (
-                  <>Kayıt Ol <span className="material-symbols-outlined text-xl">arrow_forward</span></>
+                  <>{t("reg_submit")} <span className="material-symbols-outlined text-xl">arrow_forward</span></>
                 )}
               </button>
             </form>
@@ -143,7 +145,7 @@ export default function RegisterPage() {
               </div>
               <div className="relative flex justify-center">
                 <span className="px-4 text-on-surface-variant/60 font-semibold uppercase tracking-widest text-xs bg-transparent">
-                  YA DA DEVAM ET
+                  {t("reg_divider")}
                 </span>
               </div>
             </div>
@@ -170,9 +172,9 @@ export default function RegisterPage() {
             {/* Footer link */}
             <footer className="mt-8 text-center">
               <p className="text-on-surface-variant text-body-md">
-                Zaten hesabın var mı?{" "}
+                {t("reg_has_account")}{" "}
                 <Link to="/login" className="text-primary font-bold hover:underline underline-offset-4 decoration-primary/30 ml-1 transition-all">
-                  Giriş Yap
+                  {t("reg_login_link")}
                 </Link>
               </p>
             </footer>

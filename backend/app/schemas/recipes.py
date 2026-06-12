@@ -45,6 +45,8 @@ class RecipeOut(BaseModel):
     save_count: int
     is_favorited: bool = False
     is_saved: bool = False
+    avg_rating: float | None = None
+    review_count: int | None = None
     ingredients: list[RecipeIngredientOut] = []
 
 

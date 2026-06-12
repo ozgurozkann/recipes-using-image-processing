@@ -34,7 +34,14 @@ async def upload_recipe_image(
     return {"url": f"/uploads/recipes/{filename}"}
 
 
-def _recipe_out(r: Recipe, *, is_favorited: bool = False, is_saved: bool = False) -> RecipeOut:
+def _recipe_out(
+    r: Recipe,
+    *,
+    is_favorited: bool = False,
+    is_saved: bool = False,
+    avg_rating: object = None,
+    review_count: object = None,
+) -> RecipeOut:
     return RecipeOut(
         id=r.id,
         title=r.title,
@@ -51,6 +58,8 @@ def _recipe_out(r: Recipe, *, is_favorited: bool = False, is_saved: bool = False
         save_count=r.save_count,
         is_favorited=is_favorited,
         is_saved=is_saved,
+        avg_rating=float(avg_rating) if avg_rating is not None else None,
+        review_count=int(review_count) if review_count is not None else None,
     )
 
 
@@ -62,6 +71,8 @@ def list_recipes(
     limit: int = 12,
     q: str = "",
     difficulty: str = "",
+    max_time: int = 0,
+    sort: str = "popular",
 ) -> dict:
     conditions = []
     if approved_only:
@@ -70,6 +81,8 @@ def list_recipes(
         conditions.append(Recipe.title.ilike(f"%{q}%"))
     if difficulty:
         conditions.append(Recipe.difficulty == difficulty)
+    if max_time > 0:
+        conditions.append(Recipe.cooking_time <= max_time)
 
     total = db.execute(
         select(func.count()).select_from(Recipe).where(*conditions)
@@ -91,26 +104,41 @@ def list_recipes(
             + func.coalesce(review_sub.c.avg_rating, 0) * 0.25 / 5.0
             + func.least(func.coalesce(review_sub.c.review_count, 0) * 1.0, 50.0) * 0.10 / 50.0
         )
-        items = db.execute(
-            select(Recipe)
+        if sort == "newest":
+            order = desc(Recipe.id)
+        elif sort == "fastest":
+            order = Recipe.cooking_time
+        elif sort == "rating":
+            order = desc(func.coalesce(review_sub.c.avg_rating, 0))
+        else:
+            order = desc(score_expr)
+        rows = db.execute(
+            select(Recipe, review_sub.c.avg_rating, review_sub.c.review_count)
             .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
             .where(*conditions)
-            .order_by(desc(score_expr))
+            .order_by(order)
             .offset(skip)
             .limit(limit)
-        ).scalars().all()
+        ).all()
     except Exception:
         db.rollback()
-        items = db.execute(
+        if sort == "newest":
+            fallback_order = desc(Recipe.id)
+        elif sort == "fastest":
+            fallback_order = Recipe.cooking_time
+        else:
+            fallback_order = desc(Recipe.favorite_count + Recipe.save_count)
+        plain = db.execute(
             select(Recipe)
             .where(*conditions)
-            .order_by(desc(Recipe.favorite_count + Recipe.save_count))
+            .order_by(fallback_order)
             .offset(skip)
             .limit(limit)
         ).scalars().all()
+        rows = [(r, None, None) for r in plain]
 
     return {
-        "items": [_recipe_out(r) for r in items],
+        "items": [_recipe_out(r, avg_rating=avg_r, review_count=rev_cnt) for r, avg_r, rev_cnt in rows],
         "total": total,
         "has_more": skip + limit < total,
     }
@@ -128,30 +156,39 @@ def popular(db: Session = Depends(get_db)) -> dict[str, list[RecipeOut]]:
             .group_by(RecipeReview.recipe_id)
             .subquery()
         )
+        score_expr = (
+            func.coalesce(Recipe.favorite_count, 0) * 0.40
+            + func.coalesce(Recipe.save_count, 0) * 0.25
+            + func.coalesce(review_sub.c.avg_rating, 0) * 0.25 * 40
+            + func.least(func.coalesce(review_sub.c.review_count, 0) * 1.0, 50.0) * 0.10 * 4
+        )
         rows = db.execute(
             select(Recipe, review_sub.c.avg_rating, review_sub.c.review_count)
             .outerjoin(review_sub, Recipe.id == review_sub.c.recipe_id)
             .where(Recipe.is_approved == True)  # noqa: E712
-            .limit(200)
+            .order_by(desc(score_expr))
+            .limit(30)
         ).all()
         rows = [(r, avg_r, rev_cnt) for r, avg_r, rev_cnt in rows]
     except Exception:
-        # recipe_reviews tablosu yoksa veya sorgu başarısız olursa sade sıralama yap
         db.rollback()
         simple = db.execute(
-            select(Recipe).where(Recipe.is_approved == True).limit(200)  # noqa: E712
+            select(Recipe)
+            .where(Recipe.is_approved == True)  # noqa: E712
+            .order_by(desc(Recipe.favorite_count + Recipe.save_count))
+            .limit(30)
         ).scalars().all()
         rows = [(r, None, None) for r in simple]
 
     def _score(r: Recipe, avg_r: object, rev_cnt: object) -> float:
         fav  = min(1.0, (r.favorite_count or 0) / 200.0)
         sav  = min(1.0, (r.save_count or 0) / 200.0)
-        rat  = float(avg_r or 0) / 5.0   # MySQL avg() Decimal döner, float'a çevir
+        rat  = float(avg_r or 0) / 5.0
         rcnt = min(1.0, int(rev_cnt or 0) / 50.0)
         return fav * 0.40 + sav * 0.25 + rat * 0.25 + rcnt * 0.10
 
     ranked = sorted(rows, key=lambda t: _score(t[0], t[1], t[2]), reverse=True)[:30]
-    return {"items": [_recipe_out(r) for r, _, __ in ranked]}
+    return {"items": [_recipe_out(r, avg_rating=avg_r, review_count=rev_cnt) for r, avg_r, rev_cnt in ranked]}
 
 
 @router.get("/mine", response_model=dict)

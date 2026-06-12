@@ -18,10 +18,37 @@
           document.documentElement.setAttribute('data-theme', 'dark');
       } catch(e) {}
     </script>
-    <script type="module" crossorigin src="/assets/index-CBkcZSTH.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DhuMv3Kg.css">
+
+    <!-- Google Translate: gizli widget, buton ile programatik kontrol edilir -->
+    <style>
+      /* Google Translate araç çubuğunu gizle */
+      .goog-te-banner-frame.skiptranslate { display: none !important; }
+      body { top: 0 !important; }
+      /* Çeviri tooltip'ini gizle */
+      .goog-te-menu-frame, #goog-gt-tt { display: none !important; }
+      /* Çevrilen metnin alt çizgisini kaldır */
+      font[style*="background-color:"] { background-color: transparent !important; }
+      .goog-te-gadget { display: none !important; }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CEg7pXn4.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Cs4ML9y2.css">
   </head>
   <body>
+    <!-- Gizli Google Translate konteyneri -->
+    <div id="google_translate_element" style="display:none;position:absolute;top:-9999px"></div>
+
     <div id="root"></div>
+
+    <!-- Google Translate init -->
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'tr',
+          includedLanguages: 'en',
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   </body>
 </html>

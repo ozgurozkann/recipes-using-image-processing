@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { setToken } from "../authStore";
+import { useLanguage } from "../i18n";
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function LoginPage() {
             style={{ background: "rgba(255,219,208,0.9)", backdropFilter: "blur(12px)" }}>
             <span className="text-label-caps font-semibold text-on-secondary-container flex items-center gap-2">
               <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              HOŞ GELDİNİZ
+              {t("login_chip")}
             </span>
           </div>
         </div>
@@ -53,10 +55,10 @@ export default function LoginPage() {
           <div className="max-w-sm mx-auto w-full">
             <header className="mb-8">
               <h1 className="text-headline-md md:text-display-lg font-bold text-primary mb-2">
-                Tekrar Hoş Geldiniz
+                {t("login_welcome")}
               </h1>
               <p className="text-on-surface-variant text-body-md">
-                Tariflerinizi ve favorilerinizi yönetmeye devam edin.
+                {t("login_subtitle")}
               </p>
             </header>
 
@@ -71,7 +73,7 @@ export default function LoginPage() {
               {/* Email */}
               <div className="group">
                 <label className="block text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors font-semibold uppercase tracking-wider text-xs">
-                  E-POSTA
+                  {t("login_email")}
                 </label>
                 <input
                   className="quiet-input"
@@ -87,7 +89,7 @@ export default function LoginPage() {
               {/* Password */}
               <div className="group relative">
                 <label className="block text-label-caps text-on-surface-variant mb-1 ml-1 group-focus-within:text-primary transition-colors font-semibold uppercase tracking-wider text-xs">
-                  ŞİFRE
+                  {t("login_password")}
                 </label>
                 <input
                   className="quiet-input pr-10"
@@ -115,9 +117,9 @@ export default function LoginPage() {
                 className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-body-md shadow-lg shadow-primary/20 hover:bg-primary-container active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {loading ? (
-                  <><span className="spinner" /> Giriş yapılıyor…</>
+                  <><span className="spinner" /> {t("login_loading")}</>
                 ) : (
-                  <>Giriş Yap <span className="material-symbols-outlined text-xl">arrow_forward</span></>
+                  <>{t("login_submit")} <span className="material-symbols-outlined text-xl">arrow_forward</span></>
                 )}
               </button>
             </form>
@@ -129,23 +131,23 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center">
                 <span className="px-4 text-on-surface-variant/60 font-semibold uppercase tracking-widest text-xs bg-transparent">
-                  TEST HESABI
+                  {t("login_divider")}
                 </span>
               </div>
             </div>
 
             {/* Test hint */}
             <div className="bg-surface-container rounded-xl p-4 text-xs text-on-surface-variant font-mono space-y-1">
-              <div>E-posta: <strong className="text-primary">admin@example.com</strong></div>
-              <div>Şifre: <strong className="text-primary">admin1234</strong></div>
+              <div>{t("login_email_label")} <strong className="text-primary">admin@example.com</strong></div>
+              <div>{t("login_pass_label")} <strong className="text-primary">admin1234</strong></div>
             </div>
 
             {/* Footer link */}
             <footer className="mt-8 text-center">
               <p className="text-on-surface-variant text-body-md">
-                Hesabın yok mu?{" "}
+                {t("login_no_account")}{" "}
                 <Link to="/register" className="text-primary font-bold hover:underline underline-offset-4 decoration-primary/30 ml-1 transition-all">
-                  Kayıt Ol
+                  {t("login_register_link")}
                 </Link>
               </p>
             </footer>

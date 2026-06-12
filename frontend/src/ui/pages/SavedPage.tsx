@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import RecipeCard, { RecipeCardData } from "../components/RecipeCard";
+import { useLanguage } from "../i18n";
 
 export default function SavedPage() {
+  const { lang, t } = useLanguage();
   const [items, setItems] = useState<RecipeCardData[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,11 +24,11 @@ export default function SavedPage() {
     <div className="pb-20">
       <main className="pt-8 max-w-7xl mx-auto px-5 md:px-16">
         <section className="mb-8">
-          <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">Koleksiyonum</span>
+          <span className="text-label-caps font-semibold text-secondary tracking-widest uppercase mb-2 block">{t("saved_eyebrow")}</span>
           <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight mb-3">
-            Kaydettiklerim
+            {t("saved_h1")}
           </h1>
-          <p className="text-on-surface-variant text-body-lg">Daha sonra pişirmek için kaydettiğin tarifler.</p>
+          <p className="text-on-surface-variant text-body-lg">{t("saved_desc")}</p>
         </section>
 
         {err && (
@@ -43,17 +45,17 @@ export default function SavedPage() {
           <div className="flex flex-col items-center gap-5 py-20 bg-white rounded-2xl border border-outline-variant/30 ambient-shadow">
             <span className="material-symbols-outlined text-5xl text-outline">bookmark_border</span>
             <div className="text-center">
-              <h3 className="font-bold text-on-surface mb-1">Henüz kaydedilmiş tarif yok</h3>
-              <p className="text-on-surface-variant text-sm">Tarifleri keşfedip kaydet, istediğin zaman bul!</p>
+              <h3 className="font-bold text-on-surface mb-1">{t("saved_empty_h3")}</h3>
+              <p className="text-on-surface-variant text-sm">{t("saved_empty_desc")}</p>
             </div>
             <Link to="/recipes" className="bg-primary text-white px-6 py-3 rounded-full font-semibold text-sm hover:bg-primary-container transition-all">
-              Tariflere Gözat
+              {t("saved_browse")}
             </Link>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between mb-6">
-              <span className="px-3 py-1.5 bg-primary-fixed/50 text-primary text-xs font-bold rounded-full">{items.length} kaydedilmiş tarif</span>
+              <span className="px-3 py-1.5 bg-primary-fixed/50 text-primary text-xs font-bold rounded-full">{items.length} {lang === "tr" ? "kaydedilmiş tarif" : "saved recipes"}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {items.map((r) => <RecipeCard key={r.id} recipe={r} onRefresh={load} savedView />)}

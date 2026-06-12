@@ -4,6 +4,7 @@ import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
 import { getToken } from "../authStore";
 import { getRecipePhoto } from "../recipePhotos";
+import { useLanguage } from "../i18n";
 
 type RecipeIngredient = {
   ingredient_id: number;
@@ -32,7 +33,6 @@ type Review = {
   is_mine: boolean;
 };
 
-const DIFFICULTY_LABEL: Record<string, string> = { easy: "Kolay", medium: "Orta", hard: "Zor" };
 
 function splitSteps(text: string): string[] {
   if (!text?.trim()) return [];
@@ -48,6 +48,8 @@ function splitSteps(text: string): string[] {
 
 export default function RecipeDetailPage() {
   const { id } = useParams();
+  const { t } = useLanguage();
+  const diffLabel = (d: string) => ({ easy: t("diff_easy"), medium: t("diff_medium"), hard: t("diff_hard") }[d] ?? d);
   const [item, setItem] = useState<Recipe | null>(null);
   const [cookingMode, setCookingMode] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -131,7 +133,7 @@ export default function RecipeDetailPage() {
     <div className="page-loader">
       <div className="flex flex-col items-center gap-4">
         <span className="spinner spinner-primary" style={{ width: 36, height: 36 }} />
-        <p className="text-on-surface-variant text-sm">Yükleniyor…</p>
+        <p className="text-on-surface-variant text-sm">{t("detail_loading")}</p>
       </div>
     </div>
   );
@@ -142,7 +144,7 @@ export default function RecipeDetailPage() {
         <span className="material-symbols-outlined">error</span> {err}
       </div>
       <Link to="/recipes" className="bg-primary text-white px-6 py-3 rounded-full font-semibold hover:bg-primary-container transition-all">
-        ← Tariflere Dön
+        {t("detail_back_link")}
       </Link>
     </div>
   );
@@ -158,7 +160,7 @@ export default function RecipeDetailPage() {
       <section className="max-w-7xl mx-auto px-5 md:px-16 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 mb-6 text-on-surface-variant/60 text-xs font-semibold uppercase tracking-wider">
-          <Link to="/recipes" className="hover:text-primary transition-colors">Tarifler</Link>
+          <Link to="/recipes" className="hover:text-primary transition-colors">{t("detail_recipes")}</Link>
           <span className="material-symbols-outlined text-xs">chevron_right</span>
           <span className="text-primary font-bold">{item.title}</span>
         </nav>
@@ -178,7 +180,7 @@ export default function RecipeDetailPage() {
               {item.difficulty && (
                 <span className="px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-white"
                   style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
-                  {DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
+                  {diffLabel(item.difficulty)}
                 </span>
               )}
               {item.cooking_time > 0 && (
@@ -192,7 +194,7 @@ export default function RecipeDetailPage() {
                 <span className="px-4 py-1 rounded-full text-xs font-semibold text-white flex items-center gap-1"
                   style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
                   <span className="material-symbols-outlined text-xs">group</span>
-                  {item.serving_count} kişi
+                  {item.serving_count} {t("unit_kisi")}
                 </span>
               )}
             </div>
@@ -211,7 +213,7 @@ export default function RecipeDetailPage() {
                   style={{ fontVariationSettings: favorited ? "'FILL' 1" : "'FILL' 0" }}>
                   favorite
                 </span>
-                {favorited ? "FAVORİLENDİ" : "FAVORİLE"}
+                {favorited ? t("detail_favorited") : t("detail_favorite")}
               </button>
               <button
                 onClick={toggleSave}
@@ -222,7 +224,7 @@ export default function RecipeDetailPage() {
                   style={{ fontVariationSettings: saved ? "'FILL' 1" : "'FILL' 0" }}>
                   bookmark
                 </span>
-                {saved ? "KAYDEDİLDİ" : "KAYDET"}
+                {saved ? t("detail_saved_btn") : t("detail_save_btn")}
               </button>
               <button
                 onClick={() => setCookingMode(true)}
@@ -231,7 +233,7 @@ export default function RecipeDetailPage() {
                 <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                   cooking
                 </span>
-                TARİFİ DENE
+                {t("detail_try")}
               </button>
             </div>
           </div>
@@ -255,7 +257,7 @@ export default function RecipeDetailPage() {
             <div className="bg-white rounded-2xl p-6 ambient-shadow border border-black/5">
               <div className="flex items-center gap-2 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl">shopping_basket</span>
-                <h2 className="text-headline-md font-semibold text-on-surface">Malzemeler</h2>
+                <h2 className="text-headline-md font-semibold text-on-surface">{t("detail_ingredients")}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {item.ingredients.map((ing, i) => (
@@ -278,7 +280,7 @@ export default function RecipeDetailPage() {
             <div className="bg-white rounded-2xl p-6 ambient-shadow border border-black/5">
               <div className="flex items-center gap-2 mb-6">
                 <span className="material-symbols-outlined text-primary text-2xl">restaurant_menu</span>
-                <h2 className="text-headline-md font-semibold text-on-surface">Hazırlanışı</h2>
+                <h2 className="text-headline-md font-semibold text-on-surface">{t("detail_instructions")}</h2>
               </div>
               <div className="space-y-4">
                 {steps.map((step, i) => (
@@ -300,16 +302,16 @@ export default function RecipeDetailPage() {
           <div className="bg-surface-container-high rounded-2xl p-6 ambient-shadow border border-black/5">
             <div className="flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              <h3 className="text-headline-md font-semibold text-on-surface">AI Analizi</h3>
+              <h3 className="text-headline-md font-semibold text-on-surface">{t("detail_ai")}</h3>
             </div>
             <p className="text-on-surface-variant text-body-md mb-6 leading-relaxed">
-              {item.description || "Bu tarif, taze malzemeler sayesinde zengin besin değeri içerir ve sağlıklı bir beslenme düzenine uygundur."}
+              {item.description || t("detail_ai_desc")}
             </p>
             <div className="space-y-3">
               {[
-                { label: "Favori", value: item.favorite_count, icon: "favorite" },
-                { label: "Kaydeden", value: item.save_count, icon: "bookmark" },
-                ...(item.cooking_time ? [{ label: "Süre", value: `${item.cooking_time} dk`, icon: "timer" }] : []),
+                { label: t("detail_stat_fav"), value: item.favorite_count, icon: "favorite" },
+                { label: t("detail_stat_saved"), value: item.save_count, icon: "bookmark" },
+                ...(item.cooking_time ? [{ label: t("detail_stat_time"), value: `${item.cooking_time} ${t("unit_dk")}`, icon: "timer" }] : []),
               ].map((stat) => (
                 <div key={stat.label} className="flex justify-between items-center p-3 bg-white/50 rounded-xl">
                   <span className="text-xs font-semibold text-on-surface uppercase tracking-wider flex items-center gap-1">
@@ -323,7 +325,7 @@ export default function RecipeDetailPage() {
             {item.difficulty && (
               <div className="mt-6 flex flex-wrap gap-2">
                 <span className="bg-secondary-fixed text-on-secondary-container px-3 py-1 rounded-full text-xs font-semibold">
-                  {DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
+                  {diffLabel(item.difficulty)}
                 </span>
               </div>
             )}
@@ -338,7 +340,7 @@ export default function RecipeDetailPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <h3 className="font-semibold text-on-surface text-sm">Yorumlar</h3>
+                    <h3 className="font-semibold text-on-surface text-sm">{t("detail_reviews")}</h3>
                   </div>
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-1.5">
@@ -353,7 +355,7 @@ export default function RecipeDetailPage() {
             {/* Rating form */}
             {token ? (
               <div className="mb-5 p-4 bg-surface-container-low rounded-xl space-y-3">
-                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Değerlendirin</p>
+                <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("detail_rate")}</p>
                 <div className="flex gap-1">
                   {[1,2,3,4,5].map((star) => (
                     <button
@@ -375,7 +377,7 @@ export default function RecipeDetailPage() {
                 <textarea
                   className="w-full border border-outline-variant rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
                   rows={3}
-                  placeholder="Yorumunuzu yazın… (isteğe bağlı)"
+                  placeholder={t("detail_comment_ph")}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   maxLength={1000}
@@ -386,20 +388,20 @@ export default function RecipeDetailPage() {
                     disabled={!myRating || reviewLoading}
                     className="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-bold disabled:opacity-40 hover:bg-primary/90 transition-colors"
                   >
-                    {reviewLoading ? "Gönderiliyor…" : "Gönder"}
+                    {reviewLoading ? t("detail_sending") : t("detail_send")}
                   </button>
                 </div>
               </div>
             ) : (
               <p className="text-xs text-on-surface-variant mb-4">
-                Yorum yapmak için{" "}
-                <Link to="/login" className="text-primary font-semibold hover:underline">giriş yapın</Link>.
+                {t("detail_login_msg")}{" "}
+                <Link to="/login" className="text-primary font-semibold hover:underline">{t("detail_login_link")}</Link>.
               </p>
             )}
 
             {/* Review list */}
             {reviews.length === 0 ? (
-              <p className="text-xs text-on-surface-variant text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
+              <p className="text-xs text-on-surface-variant text-center py-4">{t("detail_no_reviews")}</p>
             ) : (
               <div className="space-y-4 max-h-64 overflow-y-auto pr-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#154212 #f0f0f0" }}>
                 {reviews.map((rv) => (
@@ -424,7 +426,7 @@ export default function RecipeDetailPage() {
                             disabled={reviewLoading}
                             className="ml-auto text-[10px] text-error hover:underline disabled:opacity-40"
                           >
-                            Sil
+                            {t("detail_delete_review")}
                           </button>
                         )}
                       </div>
@@ -443,7 +445,7 @@ export default function RecipeDetailPage() {
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all font-semibold text-sm"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
-            Tüm Tariflere Dön
+            {t("detail_back")}
           </Link>
         </aside>
       </section>
@@ -473,6 +475,7 @@ function CookingModeModal({
   steps: string[];
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const [phase, setPhase] = useState<CookingPhase>("ingredients");
   const [stepIndex, setStepIndex] = useState(0);
   const [animKey, setAnimKey] = useState(0);
@@ -554,7 +557,7 @@ function CookingModeModal({
                     <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>cooking</span>
                   </div>
                   <div>
-                    <h2 className="font-bold text-on-surface">Tarifi Dene</h2>
+                    <h2 className="font-bold text-on-surface">{t("cook_title")}</h2>
                     <p className="text-xs text-on-surface-variant truncate max-w-[200px]">{recipe.title}</p>
                   </div>
                 </div>
@@ -569,11 +572,11 @@ function CookingModeModal({
               <div className="px-6 py-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_basket</span>
-                  Gerekli Malzemeler · {recipe.ingredients.length} adet
+                  {t("cook_ings_label")} · {recipe.ingredients.length}
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
                   {recipe.ingredients.length === 0 && (
-                    <p className="text-sm text-on-surface-variant py-4 text-center">Bu tarif için malzeme bilgisi yok.</p>
+                    <p className="text-sm text-on-surface-variant py-4 text-center">{t("cook_no_ing")}</p>
                   )}
                   {recipe.ingredients.map((ing, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl">
@@ -594,7 +597,7 @@ function CookingModeModal({
                   disabled={steps.length === 0}
                 >
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
-                  {steps.length === 0 ? "Adım bilgisi yok" : "Hazırım, Başlayalım!"}
+                  {steps.length === 0 ? t("cook_no_steps") : t("cook_start")}
                 </button>
               </div>
             </>
@@ -607,7 +610,7 @@ function CookingModeModal({
               <div className="px-6 pt-5 pb-4 border-b border-outline-variant/20">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                    Adım {stepIndex + 1} / {steps.length}
+                    {t("cook_step")} {stepIndex + 1} {t("cook_of")} {steps.length}
                   </span>
                   <button
                     onClick={onClose}
@@ -662,7 +665,7 @@ function CookingModeModal({
                   onClick={prev}
                 >
                   <span className="material-symbols-outlined text-sm">arrow_back</span>
-                  {stepIndex === 0 ? "Malzemeler" : "Geri"}
+                  {stepIndex === 0 ? t("cook_back_ings") : t("cook_back")}
                 </button>
                 <button
                   className="flex-[2] bg-primary text-white py-3 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary-container transition-all shadow-lg shadow-primary/20"
@@ -671,11 +674,11 @@ function CookingModeModal({
                   {stepIndex === steps.length - 1 ? (
                     <>
                       <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                      Bitti!
+                      {t("cook_done_step")}
                     </>
                   ) : (
                     <>
-                      Yaptım
+                      {t("cook_did_it")}
                       <span className="material-symbols-outlined text-sm">arrow_forward</span>
                     </>
                   )}
@@ -715,19 +718,19 @@ function CookingModeModal({
                 </div>
               </div>
 
-              <h2 className="text-2xl font-extrabold text-on-surface mt-4 mb-1">Yemek Hazır! 🎉</h2>
-              <p className="text-lg font-semibold text-primary mb-1">Afiyet Olsun!</p>
+              <h2 className="text-2xl font-extrabold text-on-surface mt-4 mb-1">{t("cook_finish_h2")}</h2>
+              <p className="text-lg font-semibold text-primary mb-1">{t("cook_enjoy")}</p>
               <p className="text-sm text-on-surface-variant mb-8">
-                {recipe.title} başarıyla tamamlandı.
+                {recipe.title}
               </p>
 
               <button
                 className="bg-primary text-white px-10 py-3.5 rounded-xl font-bold hover:bg-primary-container transition-all shadow-lg shadow-primary/20"
                 onClick={onClose}
               >
-                Teşekkürler!
+                {t("cook_thanks")}
               </button>
-              <p className="text-xs text-on-surface-variant/50 mt-3">5 saniye içinde kapanacak</p>
+              <p className="text-xs text-on-surface-variant/50 mt-3">{t("cook_auto_close")}</p>
             </div>
           )}
 

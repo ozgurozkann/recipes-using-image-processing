@@ -4,6 +4,7 @@ import { api } from "./api";
 import { getToken, logout } from "./authStore";
 import RequireAuth from "./components/RequireAuth";
 import ToastContainer from "./components/Toast";
+import { useLanguage } from "./i18n";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -34,13 +35,29 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   );
 }
 
+function triggerGoogleTranslate(targetLang: "tr" | "en") {
+  const attempt = (retries: number) => {
+    const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+    if (select) {
+      select.value = targetLang === "en" ? "en" : "tr";
+      select.dispatchEvent(new Event("change"));
+      // İkinci dispatch güvenilirliği artırır
+      setTimeout(() => select.dispatchEvent(new Event("change")), 50);
+    } else if (retries > 0) {
+      // Widget henüz yüklenmediyse tekrar dene
+      setTimeout(() => attempt(retries - 1), 300);
+    }
+  };
+  attempt(5);
+}
+
 export default function App() {
   const token = getToken();
   const [role, setRole] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { pathname } = useLocation();
+  const { lang, setLang, t } = useLanguage();
 
-  // Auth pages have simplified navbar
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
@@ -66,40 +83,54 @@ export default function App() {
             <Link to="/" className="topnav-brand">Recipe AI</Link>
             {!isAuthPage && (
               <nav className="topnav-links hidden md:flex">
-                <NavLink to="/recipes">Tarifler</NavLink>
-                <NavLink to="/recipes/popular">Popüler</NavLink>
-                {token && <NavLink to="/recommend">Öneri</NavLink>}
-                {token && <NavLink to="/my-recipes">Tariflerim</NavLink>}
-                {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
-                {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
+                <NavLink to="/recipes">{t("nav_recipes")}</NavLink>
+                <NavLink to="/recipes/popular">{t("nav_popular")}</NavLink>
+                {token && <NavLink to="/recommend">{t("nav_recommend")}</NavLink>}
+                {token && <NavLink to="/my-recipes">{t("nav_my_recipes")}</NavLink>}
+                {token && <NavLink to="/recipes/add">{t("nav_add_recipe")}</NavLink>}
+                {role === "admin" && <NavLink to="/admin">{t("nav_admin")}</NavLink>}
               </nav>
             )}
           </div>
 
           {/* Right: Actions */}
           <div className="topnav-actions">
+            {/* Language toggle */}
+            <button
+              className="flex items-center gap-1 text-xs font-bold text-primary border border-outline-variant/40 rounded-lg px-2.5 py-1.5 hover:bg-surface-container-low transition-colors cursor-pointer flex-shrink-0"
+              onClick={() => {
+                const newLang = lang === "tr" ? "en" : "tr";
+                setLang(newLang);
+                triggerGoogleTranslate(newLang);
+              }}
+              title={lang === "tr" ? "Switch to English" : "Türkçeye Geç"}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>language</span>
+              {lang.toUpperCase()}
+            </button>
+
             {token ? (
               <>
-                <Link className="topnav-icon-btn" to="/favorites" title="Favoriler">
+                <Link className="topnav-icon-btn" to="/favorites" title={t("nav_favorites_title")}>
                   <span className="material-symbols-outlined">favorite</span>
                 </Link>
-                <Link className="topnav-icon-btn" to="/saved" title="Kaydettiklerim">
+                <Link className="topnav-icon-btn" to="/saved" title={t("nav_saved_title")}>
                   <span className="material-symbols-outlined">bookmark</span>
                 </Link>
-                <Link className="topnav-icon-btn" to="/profile" title="Profil">
+                <Link className="topnav-icon-btn" to="/profile" title={t("nav_profile_title")}>
                   {avatarUrl
                     ? <img src={avatarUrl} alt="Profil" className="w-6 h-6 rounded-full object-cover ring-2 ring-primary/30" />
                     : <span className="material-symbols-outlined">account_circle</span>
                   }
                 </Link>
-                <button className="topnav-icon-btn" onClick={logout} title="Çıkış" style={{ color: "#ba1a1a" }}>
+                <button className="topnav-icon-btn" onClick={logout} title={t("nav_logout_title")} style={{ color: "#ba1a1a" }}>
                   <span className="material-symbols-outlined">logout</span>
                 </button>
               </>
             ) : (
               <>
-                <Link className="btn-auth-secondary hidden sm:block" to="/login">Giriş</Link>
-                <Link className="btn-auth-primary" to="/register">Kayıt Ol</Link>
+                <Link className="btn-auth-secondary hidden sm:block" to="/login">{t("nav_login")}</Link>
+                <Link className="btn-auth-primary" to="/register">{t("nav_register")}</Link>
               </>
             )}
           </div>
@@ -108,11 +139,11 @@ export default function App() {
         {/* Mobile nav */}
         {!isAuthPage && (
           <nav className="flex md:hidden gap-4 px-5 pb-3 overflow-x-auto scrollbar-hide" style={{ borderTop: "1px solid rgba(28,27,27,0.05)" }}>
-            <NavLink to="/recipes">Tarifler</NavLink>
-            <NavLink to="/recipes/popular">Popüler</NavLink>
-            {token && <NavLink to="/recommend">Öneri</NavLink>}
-            {token && <NavLink to="/recipes/add">Tarif Ekle</NavLink>}
-            {role === "admin" && <NavLink to="/admin">Admin</NavLink>}
+            <NavLink to="/recipes">{t("nav_recipes")}</NavLink>
+            <NavLink to="/recipes/popular">{t("nav_popular")}</NavLink>
+            {token && <NavLink to="/recommend">{t("nav_recommend")}</NavLink>}
+            {token && <NavLink to="/recipes/add">{t("nav_add_recipe")}</NavLink>}
+            {role === "admin" && <NavLink to="/admin">{t("nav_admin")}</NavLink>}
           </nav>
         )}
       </header>

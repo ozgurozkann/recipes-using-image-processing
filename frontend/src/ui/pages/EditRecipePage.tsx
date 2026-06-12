@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { toast, toastError } from "../components/Toast";
+import { useLanguage } from "../i18n";
 
 type Ingredient = { id: number; name: string; unit_type: string; category_id: number | null };
 type Category = { id: number; name: string };
@@ -23,6 +24,7 @@ type Recipe = {
 const inputClass = "w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 rounded-xl text-sm outline-none focus:ring-1 focus:ring-primary";
 
 export default function EditRecipePage() {
+  const { lang, t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -31,12 +33,10 @@ export default function EditRecipePage() {
   const [imgUploading, setImgUploading] = useState(false);
   const imgInputRef = useRef<HTMLInputElement>(null);
 
-  // Ingredient catalog
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [ingSearch, setIngSearch] = useState("");
 
-  // Form fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -49,7 +49,7 @@ export default function EditRecipePage() {
 
   useEffect(() => {
     Promise.all([
-      api<Recipe>( "GET", `/recipes/${id}`),
+      api<Recipe>("GET", `/recipes/${id}`),
       api<{ items: Ingredient[] }>("GET", "/ingredients"),
       api<{ items: Category[] }>("GET", "/ingredients/categories"),
     ])
@@ -68,7 +68,7 @@ export default function EditRecipePage() {
         setIngredients(ings);
         setCategories(cats);
       })
-      .catch((e) => { toastError("Hata", e.message); navigate("/my-recipes"); })
+      .catch((e) => { toastError(lang === "tr" ? "Hata" : "Error", e.message); navigate("/my-recipes"); })
       .finally(() => setInitLoading(false));
   }, [id]);
 
@@ -104,7 +104,7 @@ export default function EditRecipePage() {
       const res = await api<{ url: string }>("POST", "/recipes/upload-image", fd, true);
       setImageUrl(res.url);
     } catch (err: any) {
-      toastError("Yükleme hatası", err.message);
+      toastError(lang === "tr" ? "Yükleme hatası" : "Upload error", err.message);
     } finally {
       setImgUploading(false);
       e.target.value = "";
@@ -112,7 +112,7 @@ export default function EditRecipePage() {
   }
 
   async function save() {
-    if (!title.trim()) { toastError("Başlık gerekli", "Lütfen tarif adını girin."); return; }
+    if (!title.trim()) { toastError(lang === "tr" ? "Başlık gerekli" : "Title required", lang === "tr" ? "Lütfen tarif adını girin." : "Please enter the recipe name."); return; }
     setSaving(true);
     try {
       await api("PUT", `/recipes/${id}`, {
@@ -130,10 +130,10 @@ export default function EditRecipePage() {
           unit: v.unit,
         })),
       });
-      toast("Kaydedildi", "Tarif güncellendi.");
+      toast(lang === "tr" ? "Kaydedildi" : "Saved", lang === "tr" ? "Tarif güncellendi." : "Recipe updated.");
       navigate("/my-recipes");
     } catch (e: any) {
-      toastError("Hata", e.message);
+      toastError(lang === "tr" ? "Hata" : "Error", e.message);
     } finally {
       setSaving(false);
     }
@@ -156,14 +156,14 @@ export default function EditRecipePage() {
         {/* Header */}
         <div className="mb-8">
           <nav className="flex items-center gap-2 mb-3 text-on-surface-variant/60 text-xs font-semibold uppercase tracking-wider">
-            <Link to="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
+            <Link to="/" className="hover:text-primary transition-colors">{t("edit_home")}</Link>
             <span className="material-symbols-outlined text-xs">chevron_right</span>
-            <Link to="/my-recipes" className="hover:text-primary transition-colors">Tariflerim</Link>
+            <Link to="/my-recipes" className="hover:text-primary transition-colors">{t("edit_my")}</Link>
             <span className="material-symbols-outlined text-xs">chevron_right</span>
-            <span className="text-primary font-bold">Düzenle</span>
+            <span className="text-primary font-bold">{t("edit_breadcrumb")}</span>
           </nav>
           <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight">
-            Tarifi Düzenle
+            {t("edit_h1")}
           </h1>
         </div>
 
@@ -172,42 +172,42 @@ export default function EditRecipePage() {
           {/* LEFT: Basic Info */}
           <div className="lg:col-span-4 flex flex-col gap-5">
             <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow space-y-4">
-              <h3 className="font-bold text-on-surface">Temel Bilgiler</h3>
+              <h3 className="font-bold text-on-surface">{t("edit_basic_h3")}</h3>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Tarif Adı *</label>
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_title_label")}</label>
                 <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Açıklama</label>
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_desc_label")}</label>
                 <textarea className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Süre (dk)</label>
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_time_label")}</label>
                   <input className={inputClass} type="number" min={1} value={cookingTime} onChange={(e) => setCookingTime(Number(e.target.value))} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Porsiyon</label>
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_serving_label")}</label>
                   <input className={inputClass} type="number" min={1} value={servingCount} onChange={(e) => setServingCount(Number(e.target.value))} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Zorluk</label>
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_diff_label")}</label>
                   <select className={inputClass} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                    <option value="easy">Kolay</option>
-                    <option value="medium">Orta</option>
-                    <option value="hard">Zor</option>
+                    <option value="easy">{t("diff_easy")}</option>
+                    <option value="medium">{t("diff_medium")}</option>
+                    <option value="hard">{t("diff_hard")}</option>
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Kategori</label>
+                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_cat_label")}</label>
                   <select className={inputClass} value={categoryId ?? ""} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}>
-                    <option value="">— Seç —</option>
+                    <option value="">{t("edit_cat_none")}</option>
                     {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
@@ -215,11 +215,11 @@ export default function EditRecipePage() {
 
               {/* Image */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Görsel</label>
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{t("edit_img_label")}</label>
                 <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 {imageUrl ? (
                   <div className="relative rounded-xl overflow-hidden border border-outline-variant/50">
-                    <img src={imageUrl} alt="Önizleme" className="w-full h-36 object-cover" />
+                    <img src={imageUrl} alt="" className="w-full h-36 object-cover" />
                     <button
                       type="button"
                       onClick={() => setImageUrl("")}
@@ -236,8 +236,8 @@ export default function EditRecipePage() {
                     className="w-full py-5 border-2 border-dashed border-outline-variant/50 rounded-xl flex flex-col items-center gap-2 text-on-surface-variant hover:border-primary/40 hover:bg-primary/5 transition-all disabled:opacity-60"
                   >
                     {imgUploading
-                      ? <><span className="spinner" style={{ width: 18, height: 18 }} /><span className="text-xs">Yükleniyor…</span></>
-                      : <><span className="material-symbols-outlined text-2xl">add_photo_alternate</span><span className="text-xs font-medium">Fotoğraf yükle</span></>
+                      ? <><span className="spinner" style={{ width: 18, height: 18 }} /><span className="text-xs">{t("edit_uploading")}</span></>
+                      : <><span className="material-symbols-outlined text-2xl">add_photo_alternate</span><span className="text-xs font-medium">{t("edit_upload_photo")}</span></>
                     }
                   </button>
                 )}
@@ -246,13 +246,13 @@ export default function EditRecipePage() {
 
             {/* Instructions */}
             <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow space-y-3">
-              <h3 className="font-bold text-on-surface">Hazırlanış</h3>
+              <h3 className="font-bold text-on-surface">{t("edit_inst_h3")}</h3>
               <textarea
                 className={`${inputClass} min-h-[160px]`}
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 rows={8}
-                placeholder={"1. Soğanı doğrayıp kavurun.\n2. Malzemeleri ekleyin…"}
+                placeholder={t("edit_inst_ph")}
               />
             </div>
 
@@ -263,7 +263,7 @@ export default function EditRecipePage() {
                 className="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-semibold hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1"
               >
                 <span className="material-symbols-outlined text-sm">arrow_back</span>
-                İptal
+                {t("edit_cancel")}
               </Link>
               <button
                 className="flex-2 bg-primary text-white py-3 px-8 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
@@ -271,8 +271,8 @@ export default function EditRecipePage() {
                 disabled={saving}
               >
                 {saving
-                  ? <><span className="spinner" />Kaydediliyor…</>
-                  : <><span className="material-symbols-outlined text-sm">save</span>Kaydet</>
+                  ? <><span className="spinner" />{t("edit_saving")}</>
+                  : <><span className="material-symbols-outlined text-sm">save</span>{t("edit_save")}</>
                 }
               </button>
             </div>
@@ -282,10 +282,10 @@ export default function EditRecipePage() {
           <div className="lg:col-span-8 flex flex-col gap-4">
             <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 ambient-shadow">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-on-surface">Malzemeler</h3>
+                <h3 className="font-bold text-on-surface">{t("edit_ing_h3")}</h3>
                 {selectedCount > 0 && (
                   <span className="px-3 py-1 bg-primary-fixed/50 text-primary text-xs font-bold rounded-full">
-                    {selectedCount} seçili
+                    {selectedCount} {t("edit_selected_count")}
                   </span>
                 )}
               </div>
@@ -294,7 +294,7 @@ export default function EditRecipePage() {
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
                 <input
                   className={`${inputClass} pl-9`}
-                  placeholder="Malzeme ara…"
+                  placeholder={t("edit_ing_search_ph")}
                   value={ingSearch}
                   onChange={(e) => setIngSearch(e.target.value)}
                 />
@@ -350,7 +350,7 @@ export default function EditRecipePage() {
             {/* Selected summary */}
             {selectedCount > 0 && (
               <div className="bg-white rounded-2xl border border-outline-variant/30 p-5 ambient-shadow">
-                <h4 className="font-bold text-on-surface text-sm mb-3">Seçilen Malzemeler</h4>
+                <h4 className="font-bold text-on-surface text-sm mb-3">{t("edit_selected_h3")}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto custom-scrollbar">
                   {Object.entries(selected).map(([ingId, v]) => {
                     const ing = ingredients.find((x) => x.id === Number(ingId));

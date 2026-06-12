@@ -4,6 +4,7 @@ import { api } from "../api";
 import { getToken } from "../authStore";
 import { toastError, toast } from "../components/Toast";
 import { getRecipePhoto } from "../recipePhotos";
+import { useLanguage } from "../i18n";
 
 type SelectedImage = { file: File; preview: string };
 type DetectedIng = { name: string; confidence: number; source?: string | null };
@@ -37,6 +38,7 @@ function imageKey(file: File) {
 }
 
 export default function CombinedRecommendPage() {
+  const { lang, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"photo" | "manual">("photo");
 
   // Photo state
@@ -72,7 +74,7 @@ export default function CombinedRecommendPage() {
       api<{ items: Category[] }>("GET", "/ingredients/categories"),
     ])
       .then(([a, b]) => { setIngredients(a.items); setCategories(b.items); })
-      .catch((e) => toastError("Yükleme Hatası", e.message))
+      .catch((e) => toastError(lang === "tr" ? "Yükleme Hatası" : "Load Error", e.message))
       .finally(() => setInitLoading(false));
   }, []);
 
@@ -136,7 +138,7 @@ export default function CombinedRecommendPage() {
   async function doSearch() {
     if (!canSearch) return;
     if (images.length > 0 && !getToken()) {
-      toast("Giriş gerekli", "Fotoğraf yüklemek için lütfen giriş yapın.");
+      toast(lang === "tr" ? "Giriş gerekli" : "Login required", lang === "tr" ? "Fotoğraf yüklemek için lütfen giriş yapın." : "Please log in to upload photos.");
       return;
     }
     setLoading(true);
@@ -153,10 +155,10 @@ export default function CombinedRecommendPage() {
       setDetected(out.detectedIngredients ?? []);
       setItems(out.items ?? []);
       if (out.items.length === 0) {
-        toast("Sonuç bulunamadı", "Farklı malzemeler seçip tekrar deneyin.");
+        toast(lang === "tr" ? "Sonuç bulunamadı" : "No results", lang === "tr" ? "Farklı malzemeler seçip tekrar deneyin." : "Try selecting different ingredients.");
       }
     } catch (e: any) {
-      toastError("Hata", e.message);
+      toastError(lang === "tr" ? "Hata" : "Error", e.message);
     } finally {
       setLoading(false);
     }
@@ -168,18 +170,18 @@ export default function CombinedRecommendPage() {
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 mb-6 text-on-surface-variant/60 text-xs font-semibold uppercase tracking-wider">
-          <Link to="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
+          <Link to="/" className="hover:text-primary transition-colors">{t("rec_home")}</Link>
           <span className="material-symbols-outlined text-xs">chevron_right</span>
-          <span className="text-primary font-bold">Tarif Öneri</span>
+          <span className="text-primary font-bold">{t("rec_breadcrumb")}</span>
         </nav>
 
         {/* Hero */}
         <section className="mb-8">
           <h1 className="text-display-lg-mobile md:text-display-lg font-bold text-on-surface tracking-tight mb-2">
-            Malzeme ile <span className="text-primary">Tarif Bul</span>
+            {t("rec_h1_prefix")} <span className="text-primary">{t("rec_h1_highlight")}</span>
           </h1>
           <p className="text-on-surface-variant text-body-lg max-w-2xl leading-relaxed">
-            Fotoğraf yükle, manuel malzeme seç veya ikisini birden kullan — tek tıkla tarif önerisi al.
+            {t("rec_desc")}
           </p>
         </section>
 
@@ -190,7 +192,7 @@ export default function CombinedRecommendPage() {
             onClick={() => setActiveTab("photo")}
           >
             <span className="material-symbols-outlined text-sm">photo_camera</span>
-            Fotoğraf
+            {t("rec_tab_photo")}
             {images.length > 0 && <span className="bg-secondary text-white text-[10px] font-bold px-1.5 rounded-full">{images.length}</span>}
           </button>
           <button
@@ -198,7 +200,7 @@ export default function CombinedRecommendPage() {
             onClick={() => setActiveTab("manual")}
           >
             <span className="material-symbols-outlined text-sm">checklist</span>
-            Manuel
+            {t("rec_tab_manual")}
             {selectedCount > 0 && <span className="bg-primary text-white text-[10px] font-bold px-1.5 rounded-full">{selectedCount}</span>}
           </button>
         </div>
@@ -211,11 +213,11 @@ export default function CombinedRecommendPage() {
             <div className="flex items-center gap-3 mb-1">
               <span className="material-symbols-outlined text-secondary text-3xl">photo_camera</span>
               <h2 className="text-xl font-bold text-on-surface tracking-tight">
-                Fotoğraf ile <span className="text-secondary">Öneri</span>
+                {t("rec_photo_h2_prefix")} <span className="text-secondary">{t("rec_photo_h2_highlight")}</span>
               </h2>
             </div>
             <p className="text-on-surface-variant text-sm -mt-2 mb-1">
-              Birden fazla malzeme fotoğrafı yükle, her biri ayrı analiz edilsin ve hepsini içeren tarifler gelsin.
+              {t("rec_photo_desc")}
             </p>
 
             {/* Drop zone */}
@@ -250,12 +252,14 @@ export default function CombinedRecommendPage() {
                   </span>
                 </div>
                 <h3 className="font-bold text-on-surface mb-1">
-                  {images.length > 0 ? `${images.length} fotoğraf seçildi` : "AI Tarayıcıyı Başlat"}
+                  {images.length > 0
+                    ? `${images.length} ${lang === "tr" ? "fotoğraf seçildi" : "photos selected"}`
+                    : t("rec_drop_empty_h3")}
                 </h3>
                 <p className="text-on-surface-variant text-sm">
                   {images.length > 0
                     ? `${(images.reduce((s, i) => s + i.file.size, 0) / 1024).toFixed(0)} KB · JPG, PNG, WEBP`
-                    : "Görselleri buraya sürükleyin veya tıklayın"}
+                    : t("rec_drop_empty_sub")}
                 </p>
                 <div className="mt-3">
                   <span className="px-3 py-1 bg-surface-container-highest rounded-full text-[10px] font-bold tracking-widest uppercase opacity-60">
@@ -294,7 +298,7 @@ export default function CombinedRecommendPage() {
               <div className="bg-white rounded-2xl border border-outline-variant p-4 ambient-shadow">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="material-symbols-outlined text-secondary text-sm">travel_explore</span>
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-outline">Fotoğraftan Tespit Edilenler</h3>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-outline">{t("rec_detected_h3")}</h3>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {detected.map((d) => (
@@ -317,10 +321,10 @@ export default function CombinedRecommendPage() {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-lg">checklist</span>
               </div>
-              <h2 className="font-bold text-on-surface">Manuel Seç</h2>
+              <h2 className="font-bold text-on-surface">{t("rec_manual_h2")}</h2>
               {selectedCount > 0 && (
                 <span className="ml-auto text-xs bg-primary/10 text-primary font-bold px-2.5 py-0.5 rounded-full">
-                  {selectedCount} seçili
+                  {selectedCount} {lang === "tr" ? "seçili" : "selected"}
                 </span>
               )}
             </div>
@@ -330,7 +334,7 @@ export default function CombinedRecommendPage() {
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
               <input
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary text-sm placeholder:text-outline outline-none"
-                placeholder="Malzeme ara..."
+                placeholder={t("rec_ing_search_ph")}
                 value={ingSearch}
                 onChange={(e) => setIngSearch(e.target.value)}
               />
@@ -368,7 +372,8 @@ export default function CombinedRecommendPage() {
                           <div className="text-left">
                             <div className="font-semibold text-sm text-on-surface">{c.name}</div>
                             <div className="text-[10px] text-on-surface-variant">
-                              {list.length} malzeme{selInCat > 0 && ` · ${selInCat} seçili`}
+                              {list.length} {lang === "tr" ? "malzeme" : "ingredients"}
+                              {selInCat > 0 && ` · ${selInCat} ${lang === "tr" ? "seçili" : "selected"}`}
                             </div>
                           </div>
                         </div>
@@ -404,7 +409,7 @@ export default function CombinedRecommendPage() {
                   {images.length > 0 && (
                     <span className="flex items-center gap-1 px-3 py-1 bg-secondary/10 text-secondary text-xs font-semibold rounded-full">
                       <span className="material-symbols-outlined text-xs">photo_camera</span>
-                      {images.length} fotoğraf
+                      {images.length} {lang === "tr" ? "fotoğraf" : "photos"}
                     </span>
                   )}
                   {selectedNames.slice(0, 6).map((name) => (
@@ -413,12 +418,12 @@ export default function CombinedRecommendPage() {
                     </span>
                   ))}
                   {selectedCount > 6 && (
-                    <span className="text-xs text-on-surface-variant">+{selectedCount - 6} daha</span>
+                    <span className="text-xs text-on-surface-variant">+{selectedCount - 6} {lang === "tr" ? "daha" : "more"}</span>
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-on-surface-variant">
-                  Fotoğraf yükle veya malzeme seç — ardından tarif ara
+                  {t("rec_sticky_placeholder")}
                 </p>
               )}
             </div>
@@ -429,9 +434,9 @@ export default function CombinedRecommendPage() {
               onClick={doSearch}
             >
               {loading ? (
-                <><span className="spinner" /> Aranıyor…</>
+                <><span className="spinner" /> {t("rec_searching")}</>
               ) : (
-                <><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>Tarif Ara</>
+                <><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>{t("rec_search_btn")}</>
               )}
             </button>
           </div>
@@ -447,9 +452,11 @@ export default function CombinedRecommendPage() {
             ) : (
               <>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-bold text-headline-md text-on-surface">{items.length} Tarif Önerisi</h2>
+                  <h2 className="font-bold text-headline-md text-on-surface">
+                    {items.length} {lang === "tr" ? "Tarif Önerisi" : "Recipe Suggestions"}
+                  </h2>
                   <span className="text-xs text-on-surface-variant">
-                    {Math.min(visibleCount, items.length)}/{items.length} gösteriliyor
+                    {Math.min(visibleCount, items.length)}/{items.length} {lang === "tr" ? "gösteriliyor" : "shown"}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -463,7 +470,7 @@ export default function CombinedRecommendPage() {
                       className="flex items-center gap-2 text-primary font-semibold hover:underline"
                       onClick={() => setVisibleCount((c) => Math.min(c + PAGE_SIZE, items.length))}
                     >
-                      Daha Fazla Göster
+                      {t("rec_load_more")}
                       <span className="material-symbols-outlined">expand_more</span>
                     </button>
                   </div>
@@ -503,6 +510,7 @@ const IngChip = memo(function IngChip({
 });
 
 function ResultCard({ item }: { item: RecItem }) {
+  const { lang, t } = useLanguage();
   const photo = getRecipePhoto(
     { id: item.recipeId, title: item.title, image_url: item.image_url } as any,
     640, 420,
@@ -512,7 +520,7 @@ function ResultCard({ item }: { item: RecItem }) {
       <div className="recipe-card-image">
         <img src={photo} alt={item.title} loading="lazy" />
         <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
-          %{Math.round(item.matchScore)} eşleşme
+          {Math.round(item.matchScore)}% {lang === "tr" ? "eşleşme" : "match"}
         </span>
       </div>
       <div className="recipe-card-body">
@@ -520,7 +528,7 @@ function ResultCard({ item }: { item: RecItem }) {
         <div className="flex gap-2 text-xs text-on-surface-variant mb-2">
           {item.cooking_time ? (
             <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">schedule</span>{item.cooking_time} dk
+              <span className="material-symbols-outlined text-xs">schedule</span>{item.cooking_time} {t("unit_dk")}
             </span>
           ) : null}
         </div>
@@ -532,7 +540,7 @@ function ResultCard({ item }: { item: RecItem }) {
           ))}
           {item.missingIngredients.length > 0 && (
             <span className="bg-secondary-fixed/50 text-on-secondary-fixed text-xs px-2 py-0.5 rounded-full font-medium">
-              +{item.missingIngredients.length} eksik
+              +{item.missingIngredients.length} {lang === "tr" ? "eksik" : "missing"}
             </span>
           )}
         </div>
